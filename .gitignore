@@ -250,4 +250,3 @@ fabric.properties
 
 # Specific to this project
 .idea/**
-/data/tmp/*.csv

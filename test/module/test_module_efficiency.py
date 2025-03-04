@@ -1,19 +1,10 @@
 from typing import Self
 from unittest.mock import Mock
 
-import chex
-import numpy as np
-import pytest
 from beartype.door import die_if_unbearable
 from beartype.typing import Annotated, Any, Callable
 from beartype.vale import Is
-from jax import (
-    numpy as jnp,
-    tree as jt,
-)
-from jaxtyping import Array, Float, Scalar
 
-import typinox as tpx
 from typinox import (
     TypedModule,
     ValidatedT,

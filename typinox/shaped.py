@@ -1,5 +1,5 @@
 import dataclasses
-from typing import Protocol, Any, overload
+from typing import Any, Protocol, overload
 
 
 @dataclasses.dataclass(frozen=True)

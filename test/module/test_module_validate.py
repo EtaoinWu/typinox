@@ -96,7 +96,7 @@ def test_fields():
     good_matmul = good_obj.left
     bad_matmul = jt.map(lambda x: x.T, good_matmul)
     with pytest.raises(TypeError, match="does not match"):
-        bad_obj = MatMulChain(
+        _ = MatMulChain(
             a=2,
             d=3,
             left=good_matmul,
@@ -105,7 +105,7 @@ def test_fields():
         )
 
     with pytest.raises(TypeError, match="does not match"):
-        bad_obj = MatMulChain(
+        _ = MatMulChain(
             a=2,
             d=3,
             left=good_matmul,
@@ -115,7 +115,7 @@ def test_fields():
 
     bad_f = meaningless_array((2, 4))
     with pytest.raises(TypeError, match="does not match the named dimensions"):
-        bad_obj = MatMulChain(
+        _ = MatMulChain(
             a=2,
             d=3,
             left=good_obj.left,
@@ -124,7 +124,7 @@ def test_fields():
         )
 
     with pytest.raises(TypeError, match="does not match the named dimensions"):
-        bad_obj = MatMulChain(
+        _ = MatMulChain(
             a=2,
             d=4,
             left=good_obj.left,

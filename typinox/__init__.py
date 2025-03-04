@@ -1,8 +1,4 @@
 from . import tree as tree
-from ._shaped import (
-    ensure_shape as ensure_shape,
-    ensure_shape_equal as ensure_shape_equal,
-)
 from .debug import (
     debug_print as debug_print,
     debug_raise as debug_raise,
@@ -13,6 +9,10 @@ from .module import (
     TypedModule as TypedModule,
     TypedPolicy as TypedPolicy,
     field as field,
+)
+from .shaped import (
+    ensure_shape as ensure_shape,
+    ensure_shape_equal as ensure_shape_equal,
 )
 from .validator import (
     ValidatedT as ValidatedT,

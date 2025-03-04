@@ -24,18 +24,17 @@ from equinox._module import (
 )
 from jaxtyping import jaxtyped
 
-from ._shaped import ensure_shape as ensure_shape
 from ._vmapped import (
     AbstractVmapped,
     VmappedMeta,
     get_vmapped_origin_or_none,
-    make_vmapped,
 )
 from .debug import (
     TypinoxUnknownFunctionWarning,
     debug_warn,
 )
 from .error import TypinoxTypeViolation
+from .shaped import ensure_shape as ensure_shape
 from .validator import ValidatedT, ValidateFailed, validate_str
 
 AnnotatedAlias = type(Annotated[int, ">3"])

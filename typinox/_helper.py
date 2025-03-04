@@ -1,5 +1,6 @@
 from typing import Callable  # noqa: UP035
 
+__all__ = []
 
 def func_to_bracket(fn: Callable | None = None, name: str | None = None):
     if fn is None:
