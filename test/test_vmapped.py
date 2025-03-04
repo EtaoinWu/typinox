@@ -1,7 +1,9 @@
+import chex
 import equinox as eqx
 import jax
 import numpy as np
 import pytest
+from beartype import beartype as typechecker
 from beartype.door import is_bearable
 from jax import (
     numpy as jnp,
@@ -200,3 +202,25 @@ def test_vmapped_vmap_axes(Vmapped):
         assert t(xs, Vmapped[inner.__annotations__["x"], "m"])
         assert t(ys, Vmapped[inner.__annotations__["y"], ""])
         assert t(zs, Vmapped[inner.__annotations__["return"], "m"])
+
+
+ArrayOfTwo = Float[Array, " 2"]
+
+
+def test_doc_example():
+    @jaxtyped(typechecker=typechecker)
+    def my_function(x: ArrayOfTwo, y: ArrayOfTwo) -> ArrayOfTwo:
+        return x + y
+
+    @jaxtyped(typechecker=typechecker)
+    def my_vmapped(
+        x: VmappedT[ArrayOfTwo, " n"], y: VmappedT[ArrayOfTwo, " n"]
+    ) -> VmappedT[ArrayOfTwo, " n"]:
+        return jax.vmap(my_function)(x, y)
+
+    chex.assert_trees_all_close(
+        my_vmapped(jnp.ones((3, 2)), jnp.ones((3, 2))), jnp.ones((3, 2)) * 2
+    )
+
+    with pytest.raises(TypeError):
+        my_vmapped(jnp.ones((3, 2)), jnp.ones((4, 2)))

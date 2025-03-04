@@ -60,8 +60,8 @@ else:
         if issubclass(cls, AbstractVmapped):
             return cls.replace_inner(ValidatedT[cls.inner])
         if (
-            getattr(cls, "__validate__", None) is not None
-            and getattr(cls, "__validate_str__", None) is not None
+            getattr(cls, "__validate__", None) is None
+            and getattr(cls, "__validate_str__", None) is None
         ):
             return cls
         return Annotated[cls, TypinoxValid]

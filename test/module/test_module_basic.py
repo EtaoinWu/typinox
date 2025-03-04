@@ -1,5 +1,6 @@
 from typing import Self
 
+import chex
 import numpy as np
 import pytest
 from beartype.door import die_if_unbearable
@@ -25,7 +26,7 @@ class Point2D(TypedModule):
 
     def norm_correct_1(self) -> Float[Scalar, ""]:
         return (self.x**2 + self.y**2) ** 0.5
-    
+
     norm_correct_1_1 = norm_correct_1
 
     def norm_correct_2(self) -> Float[Array, "..."]:
@@ -166,3 +167,29 @@ def test_self_check():
     bad_m = m.transpose_danger_but_correct()
     with pytest.raises(TypeError):
         bad_m.transpose_incorrect_selfparam()
+
+
+def test_doc_example():
+    class AffineMap(TypedModule):  # also known as linear layer
+        k: Float[Array, "n m"]
+        b: Float[Array, " n"]
+
+        def __call__(self, x: Float[Array, " m"]) -> Float[Array, " n"]:
+            self._validate()  # populates jaxtyping shape storage
+            return jnp.dot(self.k, x) + self.b
+
+        def compose(self, other: Self) -> Self:  # Self annotation is supported!
+            return self.__class__(
+                k=jnp.dot(self.k, other.k), b=self.b + jnp.dot(self.k, other.b)
+            )
+
+    f1 = AffineMap(k=jnp.arange(6).reshape((3, 2)).astype(float), b=jnp.ones(3))
+    f2 = AffineMap(k=jnp.ones((5, 3)) / 18, b=jnp.ones(5))
+
+    chex.assert_trees_all_close(f1(jnp.ones(2)), jnp.array([2.0, 6.0, 10.0]))
+
+    with pytest.raises(TypeError):
+        f1(jnp.ones(3))
+
+    f3 = f2.compose(f1)
+    chex.assert_trees_all_close(f3(jnp.ones(2)), jnp.ones(5) * 2)

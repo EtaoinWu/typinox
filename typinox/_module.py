@@ -2,6 +2,7 @@ import dataclasses
 import inspect
 import warnings
 import weakref
+from abc import ABCMeta
 from types import FunctionType
 
 import beartype
@@ -10,9 +11,10 @@ from beartype.typing import (
     Annotated,
     Any,
     Callable,
+    Iterable,
     Self,
-    overload,
     cast,
+    overload,
 )
 from equinox import field as eqx_field
 from equinox._module import (
@@ -89,6 +91,26 @@ class TypedPolicy:
         default_factory=frozenset
     )
 
+    def __init__(
+        self,
+        always_validated: bool = True,
+        typecheck_init: bool = True,
+        typecheck_init_result: bool = True,
+        typecheck_magic_methods: bool | Iterable[str] = frozenset(["__call__"]),
+        typecheck_skip: Iterable[str] = frozenset(),
+    ):
+        object.__setattr__(self, "always_validated", always_validated)
+        object.__setattr__(self, "typecheck_init", typecheck_init)
+        object.__setattr__(self, "typecheck_init_result", typecheck_init_result)
+        object.__setattr__(
+            self,
+            "typecheck_magic_methods",
+            typecheck_magic_methods
+            if isinstance(typecheck_magic_methods, bool)
+            else frozenset(typecheck_magic_methods),
+        )
+        object.__setattr__(self, "typecheck_skip", frozenset(typecheck_skip))
+
 
 policy_for_type: weakref.WeakKeyDictionary[type, TypedPolicy] = (
     weakref.WeakKeyDictionary()
@@ -126,7 +148,7 @@ def sanitize_annotation(annotation: Any, cls: type) -> Any:
         if origin is Self:
             return cls
         return Annotated[
-            sanitize_annotation(origin, cls), annotation.__metadata__  # type: ignore
+            sanitize_annotation(origin, cls), *annotation.__metadata__  # type: ignore
         ]
     return annotation
 
@@ -149,38 +171,40 @@ def method_transform_annotations(
     return fn
 
 
-def is_magic(fn: Callable) -> bool:
-    return fn.__name__.startswith("__") and fn.__name__.endswith("__")
+def is_magic(name: str) -> bool:
+    return (
+        name.startswith("__") and name.endswith("__")
+    )
 
 
-def decorate_method(fn: Callable, cls: type, policy: TypedPolicy) -> Callable:
-    if getattr(fn, "__name__", None) in policy.typecheck_skip:
+def decorate_method(name: str, fn: Callable, cls: type, policy: TypedPolicy) -> Callable:
+    if name in policy.typecheck_skip:
         return fn
     if isinstance(fn, staticmethod):
         actual_method = fn.__func__
-        return staticmethod(decorate_method(actual_method, cls, policy))
+        return staticmethod(decorate_method(name, actual_method, cls, policy))
     if isinstance(fn, classmethod):
         actual_method = fn.__func__
-        return classmethod(decorate_method(actual_method, cls, policy))
+        return classmethod(decorate_method(name, actual_method, cls, policy))
     if isinstance(fn, property):
         fget = (
-            decorate_method(fn.fget, cls, policy)
+            decorate_method(name, fn.fget, cls, policy)
             if fn.fget is not None
             else None
         )
         fset = (
-            decorate_method(fn.fset, cls, policy)
+            decorate_method(name, fn.fset, cls, policy)
             if fn.fset is not None
             else None
         )
         fdel = (
-            decorate_method(fn.fdel, cls, policy)
+            decorate_method(name, fn.fdel, cls, policy)
             if fn.fdel is not None
             else None
         )
         return property(fget, fset, fdel)
     if isinstance(fn, EqxWrapMethod):
-        return EqxWrapMethod(decorate_method(fn.method, cls, policy))
+        return EqxWrapMethod(decorate_method(name, fn.method, cls, policy))
     if not callable(fn):
         return fn
     if not inspect.isfunction(fn):
@@ -192,12 +216,12 @@ def decorate_method(fn: Callable, cls: type, policy: TypedPolicy) -> Callable:
         return fn
     if marked_as_typed(fn):
         return fn
-    if is_magic(fn):
+    if is_magic(name):
         if isinstance(policy.typecheck_magic_methods, bool):
             if not policy.typecheck_magic_methods:
                 return fn
         else:
-            if fn.__name__ not in policy.typecheck_magic_methods:
+            if name not in policy.typecheck_magic_methods:
                 return fn
     # Main case: pure-python function.
     fn = method_transform_annotations(fn, cls, policy)
@@ -233,7 +257,7 @@ class RealTypedModuleMeta(EqxModuleMeta):
             if key == "__init__":
                 if not typed_policy.typecheck_init:
                     continue
-            decorated_value = decorate_method(value, cls, typed_policy)
+            decorated_value = decorate_method(key, value, cls, typed_policy)
             if decorated_value is not value:
                 setattr(cls, key, decorated_value)
 
@@ -253,35 +277,42 @@ class RealTypedModuleMeta(EqxModuleMeta):
                 sanitized_annotations.pop(field.name, None)
 
         # [Step 3.1 cont'd] Actually validate the fields.
-        def __validate_str__(self):
-            with jaxtyped("context"):  # type: ignore
-                for member, hint in sanitized_annotations.items():
-                    if member not in self.__dict__:
-                        continue
-                    value = self.__dict__[member]
-                    if not is_bearable(value, hint):
-                        return f"its {member} does not match type hint {hint}, got {value}"
-                if old_validate_str is not None:
-                    result = old_validate_str(self)
-                    if result:
-                        return result
-                if old_validate is not None:
-                    try:
-                        result = old_validate(self)
-                    except ValidateFailed as e:
-                        return str(e)
-                    if result is False:
-                        return "it failed its custom validation"
+        def __validate_self_str__(self):
+            __tracebackhide__ = True
+            for member, hint in sanitized_annotations.items():
+                if member not in self.__dict__:
+                    continue
+                value = self.__dict__[member]
+                if not is_bearable(value, hint):
+                    return f"its {member} does not match type hint {hint}, got {value}"
+            if old_validate_str is not None:
+                result = old_validate_str(self)
+                if result:
+                    return result
+            if old_validate is not None:
+                try:
+                    result = old_validate(self)
+                except ValidateFailed as e:
+                    return str(e)
+                if result is False:
+                    return "it failed its custom validation"
             return ""
+
+        def __validate_str__(self):
+            __tracebackhide__ = True
+            with jaxtyped("context"):  # type: ignore
+                return __validate_self_str__(self)
 
         # Add the methods to the class.
         __validate_str__.__qualname__ = "__validate_str__"
-        setattr(cls, "__validate_str__", __validate_str__)
-        setattr(cls, "__validate__", None)
+        ABCMeta.__setattr__(cls, "__validate_self_str__", __validate_self_str__)
+        ABCMeta.__setattr__(cls, "__validate_str__", __validate_str__)
+        ABCMeta.__setattr__(cls, "__validate__", None)
         return cls
 
     # Creating an instance with MyModule(...) will call this method.
     def __call__(cls, *args, **kwargs):
+        __tracebackhide__ = True
         # [Step 1] Create the instance as normal.
         instance = super().__call__(*args, **kwargs)
         # [Step 2] Typecheck the instance.
