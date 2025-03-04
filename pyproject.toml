@@ -1,35 +1,71 @@
 [project]
 name = "typinox"
 version = "0.1.0"
-description = ""
-authors = [
-    {name = "Etaoin Wu", email = "me@etaoinwu.com"}
-]
+description = "Enhanced runtime type-checked JAX modules"
+authors = [{ name = "Etaoin Wu", email = "me@etaoinwu.com" }]
 readme = "README.md"
+license = { file = "LICENSE" }
+
+keywords = [
+    "jax",
+    "neural-networks",
+    "deep-learning",
+    "equinox",
+    "typing",
+    "type-checking",
+    "annotations",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: BSD License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Natural Language :: English",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Mathematics",
+]
+urls = { repository = "https://github.com/EtaoinWu/typinox" }
+
 requires-python = ">=3.12"
 dependencies = [
     "beartype (>=0.20.0,<0.21.0)",
     "equinox (>=0.11.12,<0.12.0)",
     "jaxtyping (>=0.2.38,<0.3.0)",
-    "jax (>=0.5.1,<0.6.0)"
+    "jax (>=0.5.1,<0.6.0)",
 ]
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.5"
+pytest-cov = "^6.0.0"
+sphinx = "^8.2.3"
+sphinx-autobuild = "^2024.10.3"
+chex = "^0.1.89"
+ruff = "^0.9.9"
+pyright = "^1.1.396"
+mypy = "^1.15.0"
+
 [tool.ruff]
 line-length = 80
 target-version = "py313"
-# extend-include = ["*.ipynb"]
 
 [tool.ruff.lint]
 typing-modules = ["beartype.typing"]
 select = [
-  "E4", "E7", "E9",
-  "F",
-  "UP", # pyupgrade
-  "I",   # isort
+    "E4",
+    "E7",
+    "E9",
+    "F",
+    "UP", # pyupgrade
+    "I",  # isort
 ]
 ignore = ["F722", "E741"]
 
@@ -43,11 +79,10 @@ combine-as-imports = true
 [tool.pytest.ini_options]
 addopts = "--cov=typinox --cov-report=term-missing:skip-covered"
 
-[tool.poetry.group.dev.dependencies]
-pytest = "^8.3.5"
-pytest-cov = "^6.0.0"
-sphinx = "^8.2.3"
-sphinx-autobuild = "^2024.10.3"
-chex = "^0.1.89"
-ruff = "^0.9.9"
+[tool.pyright]
+pythonVersion = "3.13"
+exclude = ["venv", "docs", ".venv"]
 
+[tool.mypy]
+python_version = "3.13"
+exclude = ["venv", "docs", ".venv"]

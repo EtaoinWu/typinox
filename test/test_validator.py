@@ -36,7 +36,7 @@ class ClassBBase:
             return ""
         else:
             return "this instance has no x attribute"
-        
+
 
 class ClassB(ClassBBase):
     pass
@@ -151,6 +151,7 @@ def test_bad_type(cls, fn):
 def test_validator_unrelated():
     assert is_bearable(1, ValidatedT[int])
     assert not is_bearable(1, ValidatedT[str])
+
 
 def test_validator_union():
     assert not is_bearable(1, ValidatedT[ClassA | ClassB])

@@ -1,4 +1,4 @@
-from beartype.typing import TYPE_CHECKING, Annotated, TypeVar
+from beartype.typing import TYPE_CHECKING, Annotated
 from beartype.vale import Is
 
 from ._helper import func_to_bracket
@@ -47,14 +47,14 @@ def _validate(obj):
 
 
 TypinoxValid = Is[_validate]
-_T = TypeVar("_T")
 if TYPE_CHECKING:
-    ValidatedT = Annotated[_T, TypinoxValid]
+    type ValidatedT[_T] = Annotated[_T, TypinoxValid]
 else:
 
     @func_to_bracket
-    def ValidatedT(cls: _T) -> _T:
+    def ValidatedT[_T](cls: type[_T]) -> type[_T]:
         from ._vmapped import AbstractVmapped
+
         if not isinstance(cls, type):
             return Annotated[cls, TypinoxValid]
         if issubclass(cls, AbstractVmapped):

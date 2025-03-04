@@ -26,6 +26,7 @@ def test_diamond_inheritance():
         return z
 
     result_mock = Mock(return_value=True)
+
     def good_result(x):
         return result_mock(x)
 
@@ -52,7 +53,7 @@ def test_diamond_inheritance():
 
         def __validate__(self):
             return self.d >= 0 and quacks[3]()
-        
+
         def value(self: Self) -> Annotated[int, Is[good_result]]:
             return self.a + self.b + self.c + self.d
 
@@ -64,7 +65,7 @@ def test_diamond_inheritance():
     for h, num in zip(happys, [9, 12, 233, 7]):
         h.assert_called_once_with(num)
         h.reset_mock()
-    
+
     die_if_unbearable(obj, ValidatedT[D])
 
     for q in quacks:
@@ -75,7 +76,7 @@ def test_diamond_inheritance():
         h.reset_mock()
 
     assert obj.value() == 9 + 12 + 233 + 7
-    
+
     # Because jaxtyping likes to call every parameter twice
     for q in quacks:
         assert q.call_count == 2

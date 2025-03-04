@@ -12,15 +12,17 @@ from .error import TypinoxTypeViolation
 
 if TYPE_CHECKING:
 
-    @dataclass_transform(field_specifiers=(dataclasses.field, equinox.field, field))
+    @dataclass_transform(
+        field_specifiers=(dataclasses.field, equinox.field, field)
+    )
     class TypedModuleMeta(equinox._module._ModuleMeta):
         pass
 
     class TypedModule(equinox.Module, metaclass=TypedModuleMeta):
         def __validate_self_str__(self) -> str:
-            return ''
-        def _validate(self) -> None:
-            ...
+            return ""
+
+        def _validate(self) -> None: ...
 
 else:
     from ._module import RealTypedModuleMeta
@@ -37,6 +39,8 @@ else:
             if hasattr(kls, "__validate_self_str__"):
                 validated = kls.__validate_self_str__(self)
                 if validated != "":
-                    raise TypinoxTypeViolation(f"the value ({self}) is not a {cls}, as {validated}")
+                    raise TypinoxTypeViolation(
+                        f"the value ({self}) is not a {cls}, as {validated}"
+                    )
 
-    type.__setattr__(TypedModule, '_validate', _validate)
+    type.__setattr__(TypedModule, "_validate", _validate)

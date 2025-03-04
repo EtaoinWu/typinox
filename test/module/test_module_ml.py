@@ -88,8 +88,8 @@ def test_end2end_train():
     data_key, key = jr.split(key, 2)
 
     for dk in jr.split(data_key, 1):
-        net, l = train_step(net, dk, 1.)
-    
+        net, l = train_step(net, dk, 1.0)
+
     l = loss(net, key)
 
     assert l < 0.25 * 0.2
@@ -105,7 +105,9 @@ class MixtureOfExperts(TypedModule):
 
     def __call__(self, x: Float[Array, " in"]) -> Float[Array, " out"]:
         g = self.gate(x)
-        choice = jax.vmap(lambda expert, weight: weight * expert(x))(self.experts, g)
+        choice = jax.vmap(lambda expert, weight: weight * expert(x))(
+            self.experts, g
+        )
         return jnp.sum(choice, axis=0)
 
 
@@ -143,9 +145,9 @@ def test_end2end_train_moe():
     key = jr.key(1)
     gen_key, data_key, key = jr.split(key, 3)
     moe = gen_moe(gen_key, 3)
-    
+
     for dk in jr.split(data_key, 3):
-        moe, l = train_step(moe, dk, 1.)
+        moe, l = train_step(moe, dk, 1.0)
 
     l = loss(moe, key)
     assert l < 0.25 * 0.2

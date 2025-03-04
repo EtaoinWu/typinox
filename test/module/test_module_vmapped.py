@@ -31,7 +31,7 @@ class SinWave(TypedModule):
 
     def rotate_90_degs_bad(self) -> VmappedT[Self, "4"]:
         return self
-    
+
     def actual_rotate_90_degs(self):
         def rotate(x):
             return self.__class__(
@@ -39,6 +39,7 @@ class SinWave(TypedModule):
                 phase=self.phase + jnp.pi / 4 * x,
                 amp=self.amp,
             )
+
         return jax.vmap(rotate)(jnp.arange(4))
 
     def rotate_90_degs_bad_sig(self) -> Self:
@@ -70,10 +71,10 @@ def test_simple_vmap():
 
 
 def test_vmapped_self():
-    sw = SinWave(jnp.array(2.), jnp.array(4.), jnp.array(6.))
+    sw = SinWave(jnp.array(2.0), jnp.array(4.0), jnp.array(6.0))
     with pytest.raises(TypeError):
         sw.rotate_90_degs_bad()
-    
+
     with pytest.raises(TypeError):
         sw.rotate_90_degs_bad_sig()
 
@@ -81,7 +82,8 @@ def test_vmapped_self():
 
     swss = jax.vmap(lambda x: x.rotate_90_degs_good())(sws)
     assert swss.freq.shape == (4, 4)
-    
+
+
 class MultiWaves(TypedModule):
     n: int = tpx.field(static=True)
     waves: tuple[SinWaveT, ...]
@@ -167,7 +169,7 @@ class SegmentTree(TypedModule):
     def build(cls, values) -> Self | None:
         n = len(values)
         if n == 0:
-            return
+            return None
         if n == 1:
             return cls.create_leaf(values[0])
         mid = n // 2
@@ -223,7 +225,9 @@ def test_segment_tree():
             [st.query(i, j) for i, j in [(3, 7), (6, 16), (0, 15), (-3, 37)]]
         )
 
-    sts = jax.vmap(create_st)(jnp.array([1.0, 2.0, 3.0]), jnp.array([0.0, 1.0, 2.0]))
+    sts = jax.vmap(create_st)(
+        jnp.array([1.0, 2.0, 3.0]), jnp.array([0.0, 1.0, 2.0])
+    )
     assert isinstance(sts, SegmentTree)
     assert not is_bearable(sts, SegmentTreeT)
     sums = jax.vmap(elim_st)(sts)
@@ -234,4 +238,6 @@ def test_segment_tree():
 
     with jaxtyped("context"):  # type: ignore
         assert is_bearable(sts, VmappedT[SegmentTreeT, "c"])
-        assert not is_bearable(sums, VmappedT[tuple[(Float[Scalar, ""],) * 4], "c+1"])
+        assert not is_bearable(
+            sums, VmappedT[tuple[(Float[Scalar, ""],) * 4], "c+1"]
+        )

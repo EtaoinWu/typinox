@@ -164,19 +164,19 @@ def method_transform_annotations(
             continue
         new_annotation = sanitize_annotation(value, cls)
         if policy.always_validated:
-            new_annotation = ValidatedT[new_annotation]
+            new_annotation = ValidatedT[new_annotation]  # type: ignore
         if new_annotation is not value:
             annotations[key] = new_annotation
     return fn
 
 
 def is_magic(name: str) -> bool:
-    return (
-        name.startswith("__") and name.endswith("__")
-    )
+    return name.startswith("__") and name.endswith("__")
 
 
-def decorate_method(name: str, fn: Callable, cls: type, policy: TypedPolicy) -> Callable:
+def decorate_method(
+    name: str, fn: Callable, cls: type, policy: TypedPolicy
+) -> Callable:
     if name in policy.typecheck_skip:
         return fn
     if isinstance(fn, staticmethod):

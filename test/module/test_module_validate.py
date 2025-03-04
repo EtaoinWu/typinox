@@ -70,7 +70,7 @@ class MatMulChain(TypedModule):
             + jnp.sum((self.left.c - self.right.a) ** 2)
             + jnp.sum((self.final - self.right.c) ** 2)
         )
-    
+
 
 def meaningless_array(shape):
     size = int(jnp.prod(jnp.array(shape)))
@@ -111,7 +111,7 @@ def test_fields():
             left=good_matmul,
             right=good_matmul,
             final=good_obj.final,
-        )    
+        )
 
     bad_f = meaningless_array((2, 4))
     with pytest.raises(TypeError, match="does not match the named dimensions"):

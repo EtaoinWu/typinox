@@ -54,7 +54,7 @@ def test_stack_unstack():
                 ),
             ],
         }
-    
+
     xs = jnp.arange(10)
     xl = [float(x) for x in range(10)]
 

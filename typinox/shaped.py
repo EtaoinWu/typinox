@@ -10,12 +10,10 @@ class FakeArray:
 
 class NDArray(Protocol):
     @property
-    def shape(self) -> tuple[int, ...]:
-        ...
-    
+    def shape(self) -> tuple[int, ...]: ...
+
     @property
-    def dtype(self) -> Any:
-        ...
+    def dtype(self) -> Any: ...
 
 
 ShapeLike = int | tuple[int, ...] | NDArray
@@ -30,12 +28,12 @@ def shape_sanitize(shape: ShapeLike) -> tuple[int, ...]:
 
 
 @overload
-def ensure_shape(shape: ShapeLike, dim_spec: str, /):
-    ...
+def ensure_shape(shape: ShapeLike, dim_spec: str, /): ...
+
 
 @overload
-def ensure_shape(name: str, shape: ShapeLike, dim_spec: str, /):
-    ...
+def ensure_shape(name: str, shape: ShapeLike, dim_spec: str, /): ...
+
 
 def ensure_shape(*args):
     from jaxtyping import Shaped
@@ -53,21 +51,28 @@ def ensure_shape(*args):
     obj = FakeArray(shape_sanitize(shape))
     if not isinstance(obj, Shaped[FakeArray, dim_spec]):  # type: ignore
         if name:
-            raise ValidateFailed(f'{name} has shape {shape} which does not match the named dimensions "{dim_spec}"')
+            raise ValidateFailed(
+                f'{name} has shape {shape} which does not match the named dimensions "{dim_spec}"'
+            )
         else:
-            raise ValidateFailed(f"shape {shape} does not match the named dimensions {dim_spec}")
+            raise ValidateFailed(
+                f"shape {shape} does not match the named dimensions {dim_spec}"
+            )
+
 
 @overload
-def ensure_shape_equal(shape1: ShapeLike, shape2: ShapeLike, /):
-    ...
+def ensure_shape_equal(shape1: ShapeLike, shape2: ShapeLike, /): ...
+
 
 @overload
-def ensure_shape_equal(name: str, shape1: ShapeLike, shape2: ShapeLike, /):
-    ...
+def ensure_shape_equal(name: str, shape1: ShapeLike, shape2: ShapeLike, /): ...
+
 
 @overload
-def ensure_shape_equal(name1: str, shape1: ShapeLike, name2: str, shape2: ShapeLike, /):
-    ...
+def ensure_shape_equal(
+    name1: str, shape1: ShapeLike, name2: str, shape2: ShapeLike, /
+): ...
+
 
 def ensure_shape_equal(*args):
     from .validator import ValidateFailed
@@ -84,4 +89,6 @@ def ensure_shape_equal(*args):
         raise ValueError(f"invalid number of arguments: {len(args)}")
 
     if shape_sanitize(shape1) != shape_sanitize(shape2):
-        raise ValidateFailed(f"{name1} {shape1} does not match {name2} {shape2}")
+        raise ValidateFailed(
+            f"{name1} {shape1} does not match {name2} {shape2}"
+        )
