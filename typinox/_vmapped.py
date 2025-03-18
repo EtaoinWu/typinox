@@ -371,7 +371,7 @@ class VmappedHelperMeta(type):
         return make_vmapped(cls.__qualname__, inner, dim_str, checker)
 
 
-class Vmapped(metaclass=VmappedHelperMeta):
+class VmappedI(metaclass=VmappedHelperMeta):
     checker = isinstance
 
 

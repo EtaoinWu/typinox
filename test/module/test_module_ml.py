@@ -11,7 +11,7 @@ import typinox as tpx
 from typinox import (
     TypedModule,
     ValidatedT,
-    VmappedT,
+    Vmapped,
     ensure_shape,
     set_debug_mode,
 )
@@ -97,7 +97,7 @@ def test_end2end_train():
 
 class MixtureOfExperts(TypedModule):
     n_experts: int = tpx.field(static=True)
-    experts: VmappedT[Sequential, " n_experts"]
+    experts: Vmapped[Sequential, " n_experts"]
     gate: Sequential
 
     def __validate__(self):

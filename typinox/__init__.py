@@ -21,5 +21,8 @@ from .validator import (
 )
 from .vmapped import (
     Vmapped as Vmapped,
+    VmappedI as VmappedI,
     VmappedT as VmappedT,
 )
+
+Module = TypedModule

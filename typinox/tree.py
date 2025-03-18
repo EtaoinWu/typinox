@@ -4,10 +4,10 @@ from jax import (
     tree as jt,
 )
 
-from .vmapped import VmappedT
+from .vmapped import Vmapped
 
 
-def stack[T](trees: Iterable[T]) -> VmappedT[T, " _"]:
+def stack[T](trees: Iterable[T]) -> Vmapped[T, " _"]:
     """Takes a list of trees and stacks every corresponding leaf.
     For example, given two trees ((a, b), c) and ((a', b'), c'), returns
     ((stack(a, a'), stack(b, b')), stack(c, c')).
@@ -26,7 +26,7 @@ def stack[T](trees: Iterable[T]) -> VmappedT[T, " _"]:
     return treedef_list[0].unflatten(result_leaves)
 
 
-def unstack[T](tree: VmappedT[T, " _"]) -> Generator[T]:
+def unstack[T](tree: Vmapped[T, " _"]) -> Generator[T]:
     """Takes a tree and turns it into a list of trees. Inverse of tree_stack.
     For example, given a tree ((a, b), c), where a, b, and c all have first
     dimension k, will make k trees

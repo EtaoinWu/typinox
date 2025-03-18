@@ -11,14 +11,14 @@ from jax import (
 from jaxtyping import Array, Float, Integer, Scalar, Shaped, jaxtyped
 from numpy import ndarray
 
-from typinox.vmapped import Vmapped, VmappedT
+from typinox.vmapped import VmappedI, VmappedT
 
 
 def t(a, b):
     return is_bearable(a, b)
 
 
-@pytest.mark.parametrize("Vmapped", [Vmapped, VmappedT])
+@pytest.mark.parametrize("Vmapped", [VmappedI, VmappedT])
 def test_vmapped_basic(Vmapped):
     """Test the basic shape handling of Vmapped."""
     arr3 = jnp.array([1, 2, 3])
@@ -88,7 +88,7 @@ def test_vmapped_basic(Vmapped):
         assert t(narr34, Vmapped[Integer[ndarray, "n"], "$ m"])
 
 
-@pytest.mark.parametrize("Vmapped", [Vmapped, VmappedT])
+@pytest.mark.parametrize("Vmapped", [VmappedI, VmappedT])
 def test_vmapped_large(Vmapped):
     """Test the basic shape handling of Vmapped with more dimensions."""
     arr3345 = jnp.arange(180).reshape(3, 3, 4, 5)
@@ -163,7 +163,7 @@ def test_vmapped_vmap_simple(Vmapped):
         assert t(yss, Vmapped[inner.__annotations__["return"], "n n"])
 
 
-@pytest.mark.parametrize("Vmapped", [Vmapped, VmappedT])
+@pytest.mark.parametrize("Vmapped", [VmappedI, VmappedT])
 def test_vmapped_vmap_axes(Vmapped):
     """Test Vmapped with vmap using a function with in_axes and out_axes."""
 

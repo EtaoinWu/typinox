@@ -5,7 +5,7 @@ from jax import numpy as jnp
 from jaxtyping import Array, Shaped
 
 import typinox as tpx
-from typinox import VmappedT
+from typinox import Vmapped
 
 
 def test_unstack_simple():
@@ -32,7 +32,7 @@ def test_stack_simple():
     assert s[1]["a"].shape == (5, 1, 1, 3, 1, 1)
     assert is_bearable(
         s,
-        VmappedT[
+        Vmapped[
             tuple[
                 Shaped[Array, " 2 2"], dict[str, Shaped[Array, " 1 1 3 1 1"]]
             ],

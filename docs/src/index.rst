@@ -49,14 +49,16 @@ To use , simply import it and use it as an annotation for your function:
         return x + y
 
     @jaxtyped(typechecker=beartype)
-    def my_vmapped(x: VmappedT[ArrayOfTwo, " n"], y: VmappedT[ArrayOfTwo, " n"]) -> VmappedT[ArrayOfTwo, " n"]:
+    def my_vmapped(x: VmappedT[ArrayOfTwo, " n"],
+                   y: VmappedT[ArrayOfTwo, " n"]
+                 ) -> VmappedT[ArrayOfTwo, " n"]:
         return jax.vmap(my_function)(x, y)
 
     print(my_vmapped(jnp.ones((3, 2)), jnp.ones((3, 2))))
 
     my_vmapped(jnp.ones((3, 2)), jnp.ones((4, 2)))  # raises a TypeError
 
-To use `TypedModule`, subclass it and use it in place of :py:class:`equinox.Module`.
+To use :py:class:`TypedModule`, subclass it and use it in place of :py:class:`equinox.Module`.
 You will then automatically get runtime type-checking via :py:func:`jaxtyping.jaxtyped`
 and :py:func:`beartype.beartype`.
 
