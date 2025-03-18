@@ -12,11 +12,19 @@ from beartype.typing import (
     Any,
     Callable,
     Iterable,
+    Never,
     Self,
+    Sequence,
     cast,
+    get_args,
+    get_origin,
     overload,
 )
-from equinox import field as eqx_field
+from equinox import (
+    AbstractClassVar,
+    AbstractVar,
+    field as eqx_field,
+)
 from equinox._module import (
     StrictConfig,
     _ModuleMeta as EqxModuleMeta,
@@ -33,11 +41,13 @@ from .debug import (
     TypinoxUnknownFunctionWarning,
     debug_warn,
 )
-from .error import TypinoxTypeViolation
+from .error import TypinoxNotImplementedError, TypinoxTypeViolation
 from .shaped import ensure_shape as ensure_shape
 from .validator import ValidatedT, ValidateFailed, validate_str
 
-AnnotatedAlias = type(Annotated[int, ">3"])
+AnnotatedAlias = cast(type, type(Annotated[int, ">3"]))
+CallableAliasType = type(Callable[[int], float])
+GenericAliasType = type(tuple[int, str])
 UnionType = type(int | float)
 UnionGenericAlias = type(Self | None)
 
@@ -131,25 +141,57 @@ def decorate_function(fn: Callable) -> Callable:
     return jaxtyped(fn, typechecker=beartype.beartype)
 
 
+def fold_or(args: Sequence[Any]) -> Any:
+    if len(args) == 0:
+        return Never
+    result = args[0]
+    for arg in args[1:]:
+        result = result | arg
+    return result
+
+
 def sanitize_annotation(annotation: Any, cls: type) -> Any:
     if annotation is Self:
         return cls
     if isinstance(annotation, UnionType | UnionGenericAlias):
-        origin = annotation.__origin__  # type: ignore
-        args = annotation.__args__  # type: ignore
+        args = get_args(annotation)
+        return fold_or([sanitize_annotation(arg, cls) for arg in args])
+    if isinstance(annotation, GenericAliasType):
+        if isinstance(annotation, CallableAliasType):
+            return annotation
+        origin = get_origin(annotation)
+        args = get_args(annotation)
+        if origin is None:
+            raise TypinoxNotImplementedError(
+                f"Unsupported GenericAlias: {annotation}"
+            )
         return origin[tuple(sanitize_annotation(arg, cls) for arg in args)]
     if isinstance(annotation, VmappedMeta):
         origin = get_vmapped_origin_or_none(annotation)
         if origin is Self:
             return cast(type[AbstractVmapped], annotation).replace_inner(cls)
-    if isinstance(annotation, AnnotatedAlias):  # type: ignore
-        origin = annotation.__origin__  # type: ignore
+    if isinstance(annotation, AnnotatedAlias):
+        origin = getattr(annotation, "__origin__")
         if origin is Self:
             return cls
         return Annotated[
-            sanitize_annotation(origin, cls), *annotation.__metadata__  # type: ignore
+            sanitize_annotation(origin, cls),
+            *getattr(annotation, "__metadata__", []),
         ]
     return annotation
+
+
+def sanitize_member_annotation(annotation: Any, cls: type) -> Any:
+    if get_origin(annotation) is AbstractVar:
+        annotation_args = get_args(annotation)
+        assert len(annotation_args) == 1
+        inner_annotation = sanitize_annotation(annotation_args[0], cls)
+        return inner_annotation | property
+    if get_origin(annotation) is AbstractClassVar:
+        raise TypinoxNotImplementedError(
+            "AbstractClassVar is not yet supported by Typinox."
+        )
+    return sanitize_annotation(annotation, cls)
 
 
 def method_transform_annotations(
@@ -267,7 +309,7 @@ class RealTypedModuleMeta(EqxModuleMeta):
         # [Step 3.1] Recursively validate the fields.
         # [Step 3.1.0] Prepare the annotations to check.
         sanitized_annotations = {
-            key: sanitize_annotation(value, cls)
+            key: sanitize_member_annotation(value, cls)
             for key, value in cls.__annotations__.items()
         }
         # Exclude the fields that are marked as not typechecking.

@@ -6,6 +6,7 @@ from .debug import (
     set_debug_mode as set_debug_mode,
 )
 from .module import (
+    AbstractVar as AbstractVar,
     TypedModule as TypedModule,
     TypedPolicy as TypedPolicy,
     field as field,

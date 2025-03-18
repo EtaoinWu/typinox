@@ -20,3 +20,9 @@ class TypinoxTypeViolation(TypinoxError, TypeError):
     """Raised when the typechecking failed."""
 
     pass
+
+
+class TypinoxNotImplementedError(TypinoxError, NotImplementedError):
+    """Raised when a feature is not yet implemented."""
+
+    pass

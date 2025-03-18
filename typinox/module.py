@@ -11,8 +11,10 @@ from ._module import (
 from .error import TypinoxTypeViolation
 
 if TYPE_CHECKING:
+    type AbstractVar[T] = T | property
 
     @dataclass_transform(
+        frozen_default=True,
         field_specifiers=(dataclasses.field, equinox.field, field)
     )
     class TypedModuleMeta(equinox._module._ModuleMeta):
@@ -27,6 +29,7 @@ if TYPE_CHECKING:
 else:
     from ._module import RealTypedModuleMeta
 
+    AbstractVar = equinox.AbstractVar
     TypedModuleMeta = RealTypedModuleMeta
 
     class TypedModule(equinox.Module, metaclass=TypedModuleMeta):
