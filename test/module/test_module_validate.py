@@ -1,4 +1,6 @@
+import jax
 import pytest
+from beartype.door import is_bearable
 from jax import (
     numpy as jnp,
     tree as jt,
@@ -131,3 +133,37 @@ def test_fields():
             right=good_obj.right,
             final=f,
         )
+
+
+def test_doc_example():
+    from typing import Self
+
+    from typinox import ValidationFailed
+    from typinox.error import TypinoxTypeViolation
+
+    class SquareMat(TypedModule):
+        mat: Float[Array, "n n"]
+        n: int = tpx.field(static=True)
+
+        def __validate__(self):
+            if self.n != self.mat.shape[0]:
+                raise ValidationFailed(
+                    f"n={self.n} does not match mat.shape[0]={self.mat.shape[0]}"
+                )
+
+        def diagonal_plus_one(self: Self):
+            return jnp.diagonal(self.mat) + 1
+
+    f = SquareMat(mat=jnp.eye(3), n=3)
+    f.diagonal_plus_one()  # works
+
+    with pytest.raises(TypinoxTypeViolation):
+        _ = SquareMat(mat=jnp.eye(3), n=4)  # fails
+
+    f = jax.tree.map(lambda x: x.reshape((9, 1)), f)
+    # here f.mat has shape (9, 1) and f.n is 3
+    with pytest.raises(TypeError):
+        f.diagonal_plus_one()  # fails
+
+    assert isinstance(f, SquareMat)
+    assert not is_bearable(f, ValidatedT[SquareMat])  # type: ignore

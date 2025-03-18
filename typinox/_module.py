@@ -43,7 +43,7 @@ from .debug import (
 )
 from .error import TypinoxNotImplementedError, TypinoxTypeViolation
 from .shaped import ensure_shape as ensure_shape
-from .validator import ValidatedT, ValidateFailed, validate_str
+from .validator import ValidatedT, ValidationFailed, validate_str
 
 AnnotatedAlias = cast(type, type(Annotated[int, ">3"]))
 CallableAliasType = type(Callable[[int], float])
@@ -333,7 +333,7 @@ class RealTypedModuleMeta(EqxModuleMeta):
             if old_validate is not None:
                 try:
                     result = old_validate(self)
-                except ValidateFailed as e:
+                except ValidationFailed as e:
                     return str(e)
                 if result is False:
                     return "it failed its custom validation"

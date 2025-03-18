@@ -6,7 +6,7 @@ import pytest
 from beartype import beartype as typechecker
 from beartype.door import is_bearable
 
-from typinox import ValidatedT, ValidateFailed
+from typinox import ValidatedT, ValidationFailed
 
 
 class ClassA:
@@ -22,7 +22,7 @@ class ClassA:
             if self.y > 0:
                 return False
             else:
-                raise ValidateFailed("the x attribute is missing")
+                raise ValidationFailed("the x attribute is missing")
 
 
 class ClassBBase:

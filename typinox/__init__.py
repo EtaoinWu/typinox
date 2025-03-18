@@ -17,7 +17,7 @@ from .shaped import (
 )
 from .validator import (
     ValidatedT as ValidatedT,
-    ValidateFailed as ValidateFailed,
+    ValidationFailed as ValidationFailed,
 )
 from .vmapped import (
     Vmapped as Vmapped,

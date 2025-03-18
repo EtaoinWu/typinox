@@ -1,4 +1,8 @@
-Vmapped
-=======
+Vmapped annotation
+==================
 
-To be continued...
+.. autoclass:: typinox.Vmapped
+
+.. autoclass:: typinox.VmappedT
+
+.. autoclass:: typinox.VmappedI

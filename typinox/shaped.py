@@ -38,7 +38,7 @@ def ensure_shape(name: str, shape: ShapeLike, dim_spec: str, /): ...
 def ensure_shape(*args):
     from jaxtyping import Shaped
 
-    from .validator import ValidateFailed
+    from .validator import ValidationFailed
 
     if len(args) == 2:
         shape, dim_spec = args
@@ -51,11 +51,11 @@ def ensure_shape(*args):
     obj = FakeArray(shape_sanitize(shape))
     if not isinstance(obj, Shaped[FakeArray, dim_spec]):  # type: ignore
         if name:
-            raise ValidateFailed(
+            raise ValidationFailed(
                 f'{name} has shape {shape} which does not match the named dimensions "{dim_spec}"'
             )
         else:
-            raise ValidateFailed(
+            raise ValidationFailed(
                 f"shape {shape} does not match the named dimensions {dim_spec}"
             )
 
@@ -75,7 +75,7 @@ def ensure_shape_equal(
 
 
 def ensure_shape_equal(*args):
-    from .validator import ValidateFailed
+    from .validator import ValidationFailed
 
     if len(args) == 2:
         shape1, shape2 = args
@@ -89,6 +89,6 @@ def ensure_shape_equal(*args):
         raise ValueError(f"invalid number of arguments: {len(args)}")
 
     if shape_sanitize(shape1) != shape_sanitize(shape2):
-        raise ValidateFailed(
+        raise ValidationFailed(
             f"{name1} {shape1} does not match {name2} {shape2}"
         )

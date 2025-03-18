@@ -5,11 +5,13 @@
 # from the environment for the first two.
 HOST_PREFIX     ?=
 SPHINXOPTS    	?=
+SOURCEDIR     	= src
+BUILDDIR      	= _build
+MODULEDIR		= ../typinox
 SPHINXBUILD   	?= sphinx-build
 SPHINXAUTOBUILD ?= sphinx-autobuild
 AUTOBUILDIGNORE = --re-ignore ".*autoapi.*"
-SOURCEDIR     	= src
-BUILDDIR      	= _build
+AUTOBUILDWATCH  = --watch "$(MODULEDIR)"
 PREVIEWHOST		?= 0.0.0.0
 PREVIEWPORT		?= 18080
 
@@ -26,4 +28,4 @@ help:
 
 serve:
 	@echo visit "$(HOST_PREFIX)$(PREVIEWPORT)/"
-	@$(SPHINXAUTOBUILD) "$(SOURCEDIR)" "$(BUILDDIR)/html" --port $(PREVIEWPORT) --host $(PREVIEWHOST) $(AUTOBUILDIGNORE) $(SPHINXOPTS) $(O)
+	@$(SPHINXAUTOBUILD) "$(SOURCEDIR)" "$(BUILDDIR)/html" --port $(PREVIEWPORT) --host $(PREVIEWHOST) $(AUTOBUILDIGNORE) $(AUTOBUILDWATCH) $(SPHINXOPTS) $(O)

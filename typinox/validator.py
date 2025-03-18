@@ -4,15 +4,15 @@ from beartype.vale import Is
 from ._helper import func_to_bracket
 
 
-class ValidateFailed(ValueError):
+class ValidationFailed(ValueError):
     pass
 
 
 class ValidateProto:
-    def __validate__(self, obj) -> bool:
+    def __validate__(self) -> bool:
         return True
 
-    def __validate_str__(self, obj) -> str:
+    def __validate_str__(self) -> str:
         return ""
 
 
@@ -24,7 +24,7 @@ def validate_str_single(cls, obj) -> str:
     if cls.__dict__.get("__validate__", None) is not None:
         try:
             validated = cls.__validate__(obj)
-        except ValidateFailed as e:
+        except ValidationFailed as e:
             return str(e)
         if validated is False:
             return "the custom validation failed"
