@@ -7,6 +7,7 @@ from jax import (
     tree as jt,
     tree_util as jtu,
 )
+from jaxtyping import Array
 from jaxtyping._array_types import (
     _anonymous_dim,
     _check_dims,
@@ -25,6 +26,18 @@ VMAPPED_LETTER = "$"
 
 
 def err_array_name(key_path: jtu.KeyPath) -> str:
+    """Generates a friendly name from a key path.
+
+    Parameters
+    ----------
+    key_path : jax.tree_util.KeyPath
+        A PyTree key path.
+
+    Returns
+    -------
+    str
+        A human-readable name for the array.
+    """
     if len(key_path) == 0:
         return "Array"
     else:
@@ -32,13 +45,38 @@ def err_array_name(key_path: jtu.KeyPath) -> str:
 
 
 def single_check_vmapped(
-    arr: Any,
+    arr: Array | Any,
     key_path: jtu.KeyPath,
     dim_left: tuple,
     dim_right: tuple,
     single_memo: dict[str, int],
     arg_memo: dict[str, Any],
-):
+) -> Array | str | Any:
+    """Check a single array for vmapped axes.
+
+    Parameters
+    ----------
+    arr : Array | Any
+        The array to check.
+    key_path : jax.tree_util.KeyPath
+        The key path of the array, used for error messages.
+    dim_left : tuple[jaxtyping._array_types._AbstractDim]
+        The dimension specifiers for the first several axes.
+    dim_right : tuple[jaxtyping._array_types._AbstractDim]
+        The dimension specifiers for the last several axes.
+    single_memo : dict[str, int]
+        For jaxtyping internal use.
+    arg_memo : dict[str, Any]
+        For jaxtyping internal use.
+
+    Returns
+    -------
+    Array | str | Any
+        If the array is valid, returns a slice of the array with the vmapped axes removed.
+        If the array is invalid, returns an error message.
+        If ``arr`` is not an array at all, return it as is.
+    """
+
     if not hasattr(arr, "shape") or not hasattr(arr, "dtype"):
         # Not an array, ignored
         return arr
@@ -68,6 +106,12 @@ def single_check_vmapped(
         )
         if check != "":
             return err_array_name(key_path) + ": " + check
+    # Generates a list of slice objects that:
+    #   for the first `left_idx` axes, take the 0th element
+    #   for the last `right_idx` axes, take the 0th element
+    #   for the rest, take all elements
+    # This removed the vmapped axes from the array.
+    # caveat: doesn't work for axes with size 0
     item_idx = [
         0 if i < left_idx or i >= right_idx else slice(None)
         for i in range(len(shape))
@@ -78,16 +122,39 @@ def single_check_vmapped(
 def instancecheck_vmapped(
     inner: type,
     dims: tuple[tuple, tuple],
-    checker: Callable,
+    checker: Callable[[Any, type], bool],
     obj,
-    single_memo,
-    arg_memo,
-):
+    single_memo: dict[str, int],
+    arg_memo: dict[str, Any],
+) -> str:
+    """Check a PyTree structure for vmapped axes.
+
+    Parameters
+    ----------
+    inner : type
+        PyTree structure to check against.
+    dims : tuple of two tuples of jaxtyping._array_types._AbstractDim
+        The dimension specifiers for the first several axes and the last several axes.
+    checker : T -> * -> bool
+        An `isinstance`-like function to check the PyTree structure.
+    obj : T
+        The object to check.
+    single_memo : dict[str, int]
+        For jaxtyping internal use.
+    arg_memo : dict[str, Any]
+        For jaxtyping internal use.
+
+    Returns
+    -------
+    str
+        `""` if the object passes the check, or an error message otherwise.
+    """
+
     dim_left, dim_right = dims
     nodedefs, treedef = jt.flatten_with_path(obj)
     leaves = []
     for key_path, arr in nodedefs:
-        # check if arr is a str
+        # the case where `arr` is a string needs to be handled separately...
         if isinstance(arr, str):
             leaves.append(arr)
             continue
@@ -99,11 +166,15 @@ def instancecheck_vmapped(
             single_memo,
             arg_memo,
         )
+        # ... as `check` is an str if the single array check fails
         if isinstance(check, str):
             if check != "":
                 return check
             check = arr
         leaves.append(check)
+
+    # when all single arrays are valid,
+    # map the leaves (without the vmapped axes) back to the PyTree structure
     new_obj = jt.unflatten(treedef, leaves)
     if hasattr(inner, "__instancecheck_str__"):
         return inner.__instancecheck_str__(new_obj)
@@ -409,21 +480,21 @@ class VmappedT(metaclass=VmappedHelperMeta):
 
     The ``inner`` is the type hint for a PyTree structure of arrays.
     It can be any valid type hint, including another ``VmappedT`` type hint.
-    
+
     It is most useful when ``isinstance(x, inner)`` also checks the shape of arrays in ``x``.
     Examples of such ``inner`` hints include:
 
-    - **(jax or numpy) arrays**: 
+    - **(jax or numpy) arrays**:
       ``isinstance(x, VmappedT[Array, "b c"])`` checks that
       ``x`` is a jax array with at least two initial dimensions.
-    - **tuple of arrays**: 
+    - **tuple of arrays**:
       ``isinstance(x, VmappedT[tuple[Array, Array], "b c"])`` checks that both
       elements of ``x`` are jax arrays with at least two initial dimensions,
       and that their first two dimensions match.
-    - **jaxtyping shaped arrays**: 
+    - **jaxtyping shaped arrays**:
       ``VmappedT[Float[Array, "b c"], "a"]`` is equivalent to ``VmappedT[Array, "a b c"]``,
       while ``VmappedT[Float[Array, "b c"], "$ a"]`` is equivalent to ``VmappedT[Array, "b c a"]``.
-    - **Typinox Modules**: 
+    - **Typinox Modules**:
       ``isinstance(x, VmappedT[M, "b c"])`` checks that
       ``x`` is an instance of a :class:`TypedModule <typinox.module.TypedModule>` class ``M``,
       and each array member of ``x`` has at least two initial dimensions.
@@ -434,7 +505,7 @@ class VmappedT(metaclass=VmappedHelperMeta):
         raise TypinoxAnnotationError(
             "Do not instantiate `VmappedT` directly; use it as a type hint."
         )
-    
+
     checker = is_bearable
 
 
@@ -452,5 +523,5 @@ class VmappedI(metaclass=VmappedHelperMeta):
         raise TypinoxAnnotationError(
             "Do not instantiate `VmappedI` directly; use it as a type hint."
         )
-    
+
     checker = isinstance

@@ -15,7 +15,7 @@ def add_doctest_np(doctest_namespace):
     doctest_namespace["jax"] = jax
     doctest_namespace["jnp"] = jnp
     doctest_namespace["jt"] = jt
-    
+
     doctest_namespace["typinox"] = typinox
     doctest_namespace["tpx"] = typinox
 

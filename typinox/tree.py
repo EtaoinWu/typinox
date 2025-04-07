@@ -21,13 +21,13 @@ def stack[T](trees: Iterable[T]) -> Vmapped[T, " n"]:
         The type of the PyTrees
     trees : Iterable[T]
         A list of PyTrees, all with the same structure ``T``
-    
+
     Returns
     -------
     Vmapped[T, "n"]
         A PyTree with the same structure as the input trees, but with the leaves stacked
-    
-    
+
+
     Examples
     --------
 
@@ -68,7 +68,7 @@ def unstack[T](tree: Vmapped[T, " _"]) -> Generator[T]:
         The type of the PyTrees
     tree : Vmapped[T, " _"]
         A PyTree of structure ``T`` with the leaves stacked
-    
+
     Yields
     ------
     Generator[T]
