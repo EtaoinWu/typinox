@@ -1,8 +1,9 @@
-name: Publish on PyPI on Release
+name: Publish on PyPI on Release Tag
 
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - "v*.*.*"
 
 jobs:
   publish-to-pypi:
@@ -15,18 +16,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
   
-      - name: Download release assets
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          # Create dist directory if it doesn't exist
-          mkdir -p dist
-          
-          # Download .tar.gz and .whl files from the release
-          gh release download ${{ github.ref_name }} \
-            --pattern "*.tar.gz" \
-            --pattern "*.whl" \
-            --dir dist
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+  
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: latest
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+  
+      - name: Install dependencies
+        run: poetry install
+  
+      - name: Build package
+        run: poetry build
         
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
