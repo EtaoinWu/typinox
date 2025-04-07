@@ -14,7 +14,6 @@ if TYPE_CHECKING:
     type AbstractVar[T] = T | property
 
     @dataclass_transform(
-        frozen_default=True,
         field_specifiers=(dataclasses.field, equinox.field, field),
     )
     class TypedModuleMeta(equinox._module._ModuleMeta):
