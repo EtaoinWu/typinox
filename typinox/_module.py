@@ -216,17 +216,24 @@ def is_magic(name: str) -> bool:
     return name.startswith("__") and name.endswith("__")
 
 
-def decorate_method(
-    name: str, fn: Callable, cls: type, policy: TypedPolicy
-) -> Callable:
+CallableDescriptor = staticmethod | classmethod | property | EqxWrapMethod
+
+
+def decorate_method[T: Callable | CallableDescriptor](
+    name: str, fn: T, cls: type, policy: TypedPolicy
+) -> T:
     if name in policy.typecheck_skip:
         return fn
     if isinstance(fn, staticmethod):
         actual_method = fn.__func__
-        return staticmethod(decorate_method(name, actual_method, cls, policy))
+        return cast(
+            T, staticmethod(decorate_method(name, actual_method, cls, policy))
+        )
     if isinstance(fn, classmethod):
         actual_method = fn.__func__
-        return classmethod(decorate_method(name, actual_method, cls, policy))
+        return cast(
+            T, classmethod(decorate_method(name, actual_method, cls, policy))
+        )
     if isinstance(fn, property):
         fget = (
             decorate_method(name, fn.fget, cls, policy)
@@ -243,9 +250,11 @@ def decorate_method(
             if fn.fdel is not None
             else None
         )
-        return property(fget, fset, fdel)
+        return cast(T, property(fget, fset, fdel))
     if isinstance(fn, EqxWrapMethod):
-        return EqxWrapMethod(decorate_method(name, fn.method, cls, policy))
+        return cast(
+            T, EqxWrapMethod(decorate_method(name, fn.method, cls, policy))
+        )
     if not callable(fn):
         return fn
     if not inspect.isfunction(fn):
@@ -254,21 +263,22 @@ def decorate_method(
             f"Typinox: attempting to perform typechecking decoration on unknown object: {fn}",
             TypinoxUnknownFunctionWarning,
         )
-        return fn
+        return cast(T, fn)
     if marked_as_typed(fn):
-        return fn
+        return cast(T, fn)
     if is_magic(name):
         if isinstance(policy.typecheck_magic_methods, bool):
             if not policy.typecheck_magic_methods:
-                return fn
+                return cast(T, fn)
         else:
             if name not in policy.typecheck_magic_methods:
-                return fn
+                return cast(T, fn)
     # Main case: pure-python function.
-    fn = method_transform_annotations(fn, cls, policy)
-    fn = decorate_function(fn)
-    fn = mark_as_typed(fn)
-    return fn
+    pyfunc = cast(FunctionType, fn)
+    pyfunc = method_transform_annotations(pyfunc, cls, policy)
+    decorated = decorate_function(pyfunc)
+    decorated = mark_as_typed(decorated)
+    return cast(T, decorated)
 
 
 class RealTypedModuleMeta(EqxModuleMeta):

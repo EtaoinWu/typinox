@@ -50,7 +50,7 @@ sphinx = "^8.2.3"
 sphinx-autobuild = "^2024.10.3"
 chex = "^0.1.89"
 ruff = "^0.9.9"
-pyright = "^1.1.398"
+pyright = "^1.1.399"
 mypy = "^1.15.0"
 
 [tool.ruff]
@@ -82,6 +82,7 @@ addopts = "--cov=typinox --cov-report=term-missing:skip-covered --doctest-module
 [tool.pyright]
 pythonVersion = "3.13"
 exclude = ["venv", "docs", ".venv"]
+enableExperimentalFeatures = true
 
 [tool.mypy]
 python_version = "3.13"

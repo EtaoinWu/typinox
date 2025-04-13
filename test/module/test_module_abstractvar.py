@@ -31,7 +31,7 @@ def test_abstract_var_subclass():
 
 class SubWithProperty(Base):
     @property  # type: ignore
-    def b(self) -> int:
+    def b(self) -> int:  # type: ignore
         return self.a + 2
 
 
