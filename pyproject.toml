@@ -83,6 +83,7 @@ addopts = "--cov=typinox --cov-report=term-missing:skip-covered --doctest-module
 pythonVersion = "3.13"
 exclude = ["venv", "docs", ".venv"]
 enableExperimentalFeatures = true
+reportPrivateImportUsage = "information"
 
 [tool.mypy]
 python_version = "3.13"

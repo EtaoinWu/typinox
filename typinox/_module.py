@@ -26,9 +26,10 @@ from equinox import (
     field as eqx_field,
 )
 from equinox._module import (
-    StrictConfig,  # type: ignore
-    _ModuleMeta as EqxModuleMeta,  # type: ignore
-    _wrap_method as EqxWrapMethod,  # type: ignore
+    StrictConfig,
+    _has_dataclass_init,
+    _ModuleMeta as EqxModuleMeta,
+    _wrap_method as EqxWrapMethod,
 )
 from jaxtyping import jaxtyped
 
@@ -77,6 +78,34 @@ def field(
     metadata: dict[str, Any] | None = None,
     **kwargs,
 ) -> dataclasses.Field:
+    """Specify a field of a typinox typed module.
+
+    Parameters
+    ----------
+
+    typecheck : bool, default True
+        If specified as False, the field will be ignored during typechecking.
+
+    converter : Callable[[Any], Any], optional
+        Used by ``__init__`` to pre-process the value.
+        See :func:`equinox.field`.
+
+    static : bool, default False
+        If specified as True, the field will be static. This will make it
+        a part of the pytree structure, instead of a subtree or a leaf.
+        See :func:`equinox.field`.
+
+    default : Any, optional
+        Default value used by ``__init__`` if this field is not provided.
+        See :func:`dataclasses.field`.
+
+    default_factory : Callable[[], Any] | Any, optional
+        Used to generate a default value by ``__init__`` if this field is not provided.
+        See :func:`dataclasses.field`.
+
+    metadata : dict[str, Any] | None, optional
+        Metadata to be attached to the field.
+    """
     if metadata is None:
         metadata = {}
     metadata["typecheck"] = typecheck
@@ -88,37 +117,57 @@ def field(
 
 @dataclasses.dataclass(frozen=True)
 class TypedPolicy:
-    """Used to configure the typechecking behavior of a module."""
+    """Used to configure the typechecking behavior of a module.
+
+    As an example, if you want to disable typechecking for a specific method,
+    you can use the following:
+
+    .. code-block:: python
+
+        class MyModule(TypedModule,
+                    typed_policy=TypedPolicy(skip_methods={"wtf"})):
+            a: int
+            b: int = field(typecheck=False)
+
+            def wtf(self, x: int):
+                return x
+
+        z = MyModule(1, "not an int")
+        z.wtf("also not an int")
+
+    .. hint::
+
+        You can also use the :func:`typing.no_type_check` decorator
+        to disable typechecking for a specific method.
+
+    Parameters
+    ----------
+
+    always_validated : bool, default True
+        If True, every argument of methods will be type checked with a
+        custom validator if present.
+
+    typecheck_init_result : bool, default True
+        If False, type checking will not be performed on the result
+        of ``__init__``.
+
+    skip_methods : frozenset[str], default {}
+        Specifies which methods should skip type checking.
+    """
 
     always_validated: bool = dataclasses.field(default=True)
-    typecheck_init: bool = dataclasses.field(default=True)
     typecheck_init_result: bool = dataclasses.field(default=True)
-    typecheck_magic_methods: bool | frozenset[str] = dataclasses.field(
-        default=frozenset(["__call__"])
-    )
-    typecheck_skip: frozenset[str] = dataclasses.field(
-        default_factory=frozenset
-    )
+    skip_methods: frozenset[str] = dataclasses.field(default_factory=frozenset)
 
     def __init__(
         self,
         always_validated: bool = True,
-        typecheck_init: bool = True,
         typecheck_init_result: bool = True,
-        typecheck_magic_methods: bool | Iterable[str] = frozenset(["__call__"]),
-        typecheck_skip: Iterable[str] = frozenset(),
+        skip_methods: Iterable[str] = frozenset(),
     ):
         object.__setattr__(self, "always_validated", always_validated)
-        object.__setattr__(self, "typecheck_init", typecheck_init)
         object.__setattr__(self, "typecheck_init_result", typecheck_init_result)
-        object.__setattr__(
-            self,
-            "typecheck_magic_methods",
-            typecheck_magic_methods
-            if isinstance(typecheck_magic_methods, bool)
-            else frozenset(typecheck_magic_methods),
-        )
-        object.__setattr__(self, "typecheck_skip", frozenset(typecheck_skip))
+        object.__setattr__(self, "skip_methods", frozenset(skip_methods))
 
 
 policy_for_type: weakref.WeakKeyDictionary[type, TypedPolicy] = (
@@ -151,6 +200,10 @@ def fold_or(args: Sequence[Any]) -> Any:
 
 
 def sanitize_annotation(annotation: Any, cls: type) -> Any:
+    """Recursively sanitize the annotation.
+
+    Replaces ``Self`` with the class itself; recurses into ``Union`` and
+    similar types."""
     if annotation is Self:
         return cls
     if isinstance(annotation, UnionType | UnionGenericAlias):
@@ -197,6 +250,9 @@ def sanitize_member_annotation(annotation: Any, cls: type) -> Any:
 def method_transform_annotations(
     fn: FunctionType, cls: type, policy: TypedPolicy
 ) -> FunctionType:
+    """Sanitize all annotations of a method.
+
+    Also wraps every annotation with ValidatedT[]."""
     annotations = fn.__annotations__
     for key, value in annotations.items():
         if isinstance(value, str):
@@ -218,11 +274,45 @@ def is_magic(name: str) -> bool:
 
 CallableDescriptor = staticmethod | classmethod | property | EqxWrapMethod
 
+SKIP_MAGIC_MODULES = frozenset(
+    [
+        "builtins",
+        "typing",
+        "dataclasses",
+        "typinox",
+        "typinox.module",
+        "typinox._module",
+        "equinox",
+        "equinox._module",
+    ]
+)
+SKIP_MAGIC_NAMES = frozenset(
+    [
+        "__validate__",
+        "__validate_str__",
+        "__validate_self_str__",
+    ]
+)
+
+
+def skip_magic(
+    name: str, fn: Callable | CallableDescriptor, cls: type, policy: TypedPolicy
+) -> bool:
+    if name in SKIP_MAGIC_NAMES:
+        return True
+    if fn.__module__ in SKIP_MAGIC_MODULES:
+        return True
+    return False
+
 
 def decorate_method[T: Callable | CallableDescriptor](
     name: str, fn: T, cls: type, policy: TypedPolicy
 ) -> T:
-    if name in policy.typecheck_skip:
+    """Decorate a method with the typechecker (jaxtyped and beartype).
+    Recurses into staticmethods, classmethods and properties."""
+    if name in policy.skip_methods:
+        return fn
+    if getattr(fn, "__no_type_check__", False):
         return fn
     if isinstance(fn, staticmethod):
         actual_method = fn.__func__
@@ -267,12 +357,8 @@ def decorate_method[T: Callable | CallableDescriptor](
     if marked_as_typed(fn):
         return cast(T, fn)
     if is_magic(name):
-        if isinstance(policy.typecheck_magic_methods, bool):
-            if not policy.typecheck_magic_methods:
-                return cast(T, fn)
-        else:
-            if name not in policy.typecheck_magic_methods:
-                return cast(T, fn)
+        if skip_magic(name, fn, cls, policy):
+            return cast(T, fn)
     # Main case: pure-python function.
     pyfunc = cast(FunctionType, fn)
     pyfunc = method_transform_annotations(pyfunc, cls, policy)
@@ -282,6 +368,15 @@ def decorate_method[T: Callable | CallableDescriptor](
 
 
 class RealTypedModuleMeta(EqxModuleMeta):
+    """Metaclass for TypedModule.
+
+    If you want to create a module with a metaclass other than
+    :class:`abc.ABCMeta`, :class:`equinox._module._ModuleMeta` or
+    :class:`typinox.module.TypedModuleMeta`, you need to create a
+    new metaclass that inherits from this class and your metaclass of
+    choice.
+    """
+
     def __new__(
         mcs,
         name,
@@ -289,7 +384,7 @@ class RealTypedModuleMeta(EqxModuleMeta):
         dict_,
         /,
         strict: bool | StrictConfig = False,
-        typed_policy: TypedPolicy | None = None,
+        typed_policy: TypedPolicy | dict | None = None,
         **kwargs,
     ):
         # [Step 1] Create the Module as normal.
@@ -300,13 +395,16 @@ class RealTypedModuleMeta(EqxModuleMeta):
 
         # [Step 2] Wrap all methods with the typechecker.
         # [Step 2.0] Prepare the typechecking policy.
+        if isinstance(typed_policy, dict):
+            typed_policy = TypedPolicy(**typed_policy)
         if typed_policy is None:
             typed_policy = TypedPolicy()
         policy_for_type[cls] = typed_policy
         # [Step 2.1] Wrap the methods with the typechecker.
         for key, value in cls.__dict__.items():
             if key == "__init__":
-                if not typed_policy.typecheck_init:
+                # We skip __init__ method generated by Equinox.
+                if _has_dataclass_init[cls]:
                     continue
             decorated_value = decorate_method(key, value, cls, typed_policy)
             if decorated_value is not value:
@@ -375,3 +473,6 @@ class RealTypedModuleMeta(EqxModuleMeta):
                     f"The instance {instance} of {cls} has failed typechecking, as {check_result}"
                 )
         return instance
+
+
+RealTypedModuleMeta.__name__ = "TypedModuleMeta"

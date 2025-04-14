@@ -8,6 +8,7 @@ API Reference
     :maxdepth: 2
 
     vmapped
+    typedmodule
 
 Vmapped annotation
 ------------------
@@ -19,6 +20,14 @@ Vmapped annotation
     VmappedI
     Vmapped
 
+Typed Modules
+-------------
+
+.. autosummary::
+    :signatures: none
+
+    TypedModule
+
 Submodules
 ----------
 
@@ -26,4 +35,5 @@ Submodules
     :maxdepth: 1
 
     typinox.error
+    typinox.shaped
     typinox.tree

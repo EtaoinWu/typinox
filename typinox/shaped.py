@@ -3,12 +3,17 @@ from typing import Any, Protocol, overload
 
 
 @dataclasses.dataclass(frozen=True)
-class FakeArray:
+class _FakeArray:
     shape: tuple[int, ...]
     dtype: Any = dataclasses.field(default=None)
 
 
 class NDArray(Protocol):
+    """
+    Duck match for any object that behaves like a numpy array
+    (has ``.shape`` and ``.dtype`` attributes).
+    """
+
     @property
     def shape(self) -> tuple[int, ...]: ...
 
@@ -36,6 +41,31 @@ def ensure_shape(name: str, shape: ShapeLike, dim_spec: str, /): ...
 
 
 def ensure_shape(*args):
+    """
+    Ensure that the shape of an array matches :mod:`jaxtyping` named dimensions.
+
+    Parameters
+    ----------
+    name: str, optional
+        The name of the array.
+
+    shape : ShapeLike
+        The shape of the array.
+
+    dim_spec : str
+        The :mod:`jaxtyping` named dimensions to be matched.
+
+    Returns
+    -------
+    None
+        If the shape matches the named dimensions, return None.
+
+    Raises
+    ------
+    ValidationFailed
+        when the shape does not match the named dimensions
+    """
+
     from jaxtyping import Shaped
 
     from .validator import ValidationFailed
@@ -48,8 +78,8 @@ def ensure_shape(*args):
     else:
         raise ValueError(f"invalid number of arguments: {len(args)}")
 
-    obj = FakeArray(shape_sanitize(shape))
-    if not isinstance(obj, Shaped[FakeArray, dim_spec]):  # type: ignore
+    obj = _FakeArray(shape_sanitize(shape))
+    if not isinstance(obj, Shaped[_FakeArray, dim_spec]):  # type: ignore
         if name:
             raise ValidationFailed(
                 f'{name} has shape {shape} which does not match the named dimensions "{dim_spec}"'
@@ -75,6 +105,37 @@ def ensure_shape_equal(
 
 
 def ensure_shape_equal(*args):
+    """
+    Ensure that the shapes of two arrays are equal.
+
+    Parameters
+    ----------
+    name : str, optional
+        The name of the arrays. Cannot be provided if name1 or name2 is provided.
+
+    name1 : str, optional
+        The name of the first array. Must be provided if name2 is provided.
+
+    shape1 : int, or tuple[int, ...], or an object with ``.shape``
+        The shape of the first array.
+
+    name2 : str, optional
+        The name of the second array. Must be provided if name1 is provided.
+
+    shape2 : int, or tuple[int, ...], or an object with ``.shape``
+        The shape of the second array.
+
+    Returns
+    -------
+    None
+        If the shapes are equal, return None.
+
+    Raises
+    ------
+    ValidationFailed
+        when the shapes are not equal.
+    """
+
     from .validator import ValidationFailed
 
     if len(args) == 2:

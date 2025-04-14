@@ -21,7 +21,7 @@ To use Typinox, first install it using pip:
 
 .. code-block:: console
 
-    $ pip install git+https://github.com/EtaoinWu/typinox.git
+    $ pip install typinox
 
 Python 3.12 or later is required.
 
