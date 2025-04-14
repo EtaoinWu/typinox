@@ -52,6 +52,10 @@ chex = "^0.1.89"
 ruff = "^0.9.9"
 pyright = "^1.1.399"
 mypy = "^1.15.0"
+sphinx-book-theme = "^1.1.4"
+
+[project.optional-dependencies]
+docs = ["sphinx>=8.2.3,<9.0", "sphinx-book-theme>=1.1.4,<2.0"]
 
 [tool.ruff]
 line-length = 80
