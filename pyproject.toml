@@ -1,6 +1,6 @@
 [project]
 name = "typinox"
-version = "0.2.0"
+version = "0.2.1"
 description = "Enhanced runtime type-checked JAX modules"
 authors = [{ name = "Etaoin Wu", email = "me@etaoinwu.com" }]
 readme = "README.md"

@@ -14,4 +14,9 @@ pip install typinox
 Documentation
 -------------
 
-The documentation is not yet available.
+Read the documentation at [https://typinox.readthedocs.io](https://typinox.readthedocs.io).
+
+License
+-------
+
+This project is licensed under the BSD 3-Clause License. See the [LICENSE](LICENSE) file for details.

@@ -41,3 +41,4 @@ jobs:
             dist/*.whl
           body_path: docs/release_notes.md
           generate_release_notes: true
+          append_body: true
