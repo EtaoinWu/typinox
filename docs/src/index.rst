@@ -7,7 +7,7 @@ Typinox
 =======
 
 **Typinox** (TAI-pee-nox) is a Python library for enhancing run-time type-checking of
-``jaxtyping``-annotated arrays and :class:`equinox.Module` s. 
+``jaxtyping``-annotated arrays and :class:`equinox.Module` s.
 
 .. note::
 
@@ -28,14 +28,14 @@ Python 3.12 or later is required.
 Basic usage
 -----------
 
-Typinox has two main components: :mod:`typinox.vmapped`, 
+Typinox has two main components: :mod:`typinox.vmapped`,
 providing a :class:`Vmapped <typinox.VmappedT>` annotation
 for :func:`vmap <jax.vmap>`-compatible functions,
 and :mod:`typinox.module`,
 providing a :class:`TypedModule <typinox.TypedModule>` class for run-time type-checking of Equinox modules.
 
 With ``Vmapped[T, "dims"]`` you can annotate variables that are valid arguments to a
-:func:`vmap <jax.vmap>`-ed function. For example, if 
+:func:`vmap <jax.vmap>`-ed function. For example, if
 
 .. code-block:: python
 
@@ -54,7 +54,7 @@ And you can use it with :func:`vmap() <jax.vmap>`:
 
     def my_function(_) -> T:
         return (jnp.zeros(3), jnp.ones(2))
-    
+
     a = jax.vmap(my_function)(jnp.arange(4))
     assert isinstance(a, Vmapped[T, "n"])
 
@@ -103,4 +103,3 @@ if newer ones provide any benefits that Typinox can leverage.
     annotation_best_practice
     API Reference <api/index>
     Development <development>
-

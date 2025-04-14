@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     @dataclass_transform(
         field_specifiers=(dataclasses.field, equinox.field, field),
     )
-    class TypedModuleMeta(equinox._module._ModuleMeta):
+    class TypedModuleMeta(equinox._module._ModuleMeta):  # type: ignore
         pass
 
     class TypedModule(equinox.Module, metaclass=TypedModuleMeta):

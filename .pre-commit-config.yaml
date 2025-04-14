@@ -1,0 +1,36 @@
+default_language_version:
+  python: python3.13
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v2.3.0
+    hooks:
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+  - repo: local
+    hooks:
+      - id: ruff format
+        name: Ruff formatter
+        entry: poetry run ruff format
+        language: system
+        types: [python]
+        files: '^(typinox|test|docs)/'
+      - id: ruff lint
+        name: Ruff linter
+        entry: poetry run ruff check --fix
+        language: system
+        types: [python]
+        files: '^(typinox|test|docs)/'
+      - id: pyright
+        name: Pyright type checker
+        entry: poetry run pyright
+        language: system
+        types: [python]
+        files: '^(typinox|test)/'
+      - id: mypy
+        name: Mypy type checker
+        entry: poetry run mypy
+        language: system
+        types: [python]
+        files: '^(typinox|test)/'

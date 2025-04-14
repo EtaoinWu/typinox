@@ -15,4 +15,3 @@ Documentation
 -------------
 
 The documentation is not yet available.
-

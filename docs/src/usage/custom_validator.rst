@@ -30,7 +30,7 @@ the module itself. For example, with the following module:
         def __validate__(self):
             if self.n != self.mat.shape[0]:
                 raise ValidationFailed(f"n={self.n} does not match mat.shape[0]={self.mat.shape[0]}")
-        
+
         def diagonal_plus_one(self: Self):
             return jnp.diagonal(self.mat) + 1
 
@@ -60,7 +60,7 @@ There are three ways to define a custom validator:
 
 .. note::
     When both methods are present, both needs to pass for the validation to succeed.
-    This is not recommended due to the potential for confusion. 
+    This is not recommended due to the potential for confusion.
 
 When type-checking an object, each of its base classes are checked in order.
 All of them need to pass for the object to be considered valid.

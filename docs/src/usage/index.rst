@@ -59,7 +59,7 @@ Method calls and return values are automatically checked:
 
     f1 = AffineMap(k=jnp.arange(6).reshape((3, 2)).astype(float), b=jnp.ones(3))
     f2 = AffineMap(k=jnp.ones((5, 3)) / 18, b=jnp.ones(5))
-    
+
     print(f1(jnp.ones(2)))
     print(f2.compose(f1)(jnp.ones(2)))
 

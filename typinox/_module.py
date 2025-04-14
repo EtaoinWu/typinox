@@ -26,9 +26,9 @@ from equinox import (
     field as eqx_field,
 )
 from equinox._module import (
-    StrictConfig,
-    _ModuleMeta as EqxModuleMeta,
-    _wrap_method as EqxWrapMethod,
+    StrictConfig,  # type: ignore
+    _ModuleMeta as EqxModuleMeta,  # type: ignore
+    _wrap_method as EqxWrapMethod,  # type: ignore
 )
 from jaxtyping import jaxtyped
 
