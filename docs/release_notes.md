@@ -1,11 +1,8 @@
-This is the `v0.2.1` release of the `typinox` project.
+This is the `v0.3.0rc0` release of the `typinox` project.
 
 In this version:
 
-- Documents are now available in the `docs` directory
-  and are available on [Read the Docs](https://typinox.readthedocs.io).
-- Several minor improvements.
-- The CI pipeline has been improved. A `pre-commit` hook is now used to check for
-  formatting and linting issues.
+- Added support for `equinox` version `0.13.0`. Minor is bumped to reflect the potential breaking changes in upstream.
+- Bumped dependency `beartype` to `0.22.0rc0` to support potential Python `3.14`. This package is marked as a release candidate as the upstream is.
 
 <!-- TODO before release: pyproject.toml, docs/src/conf.py -->

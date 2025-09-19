@@ -25,11 +25,10 @@ from equinox import (
     AbstractVar,
     field as eqx_field,
 )
-from equinox._module import (
-    StrictConfig,
+from equinox._module._module import (
+    BoundMethod as EqxWrapMethod,
     _has_dataclass_init,
     _ModuleMeta as EqxModuleMeta,
-    _wrap_method as EqxWrapMethod,
 )
 from jaxtyping import jaxtyped
 
@@ -341,10 +340,11 @@ def decorate_method[T: Callable | CallableDescriptor](
             else None
         )
         return cast(T, property(fget, fset, fdel))
-    if isinstance(fn, EqxWrapMethod):
-        return cast(
-            T, EqxWrapMethod(decorate_method(name, fn.method, cls, policy))
-        )
+    # # not needed after equinox 0.13
+    # if isinstance(fn, EqxWrapMethod):
+    #     return cast(
+    #         T, EqxWrapMethod(decorate_method(name, fn.method, cls, policy))
+    #     )
     if not callable(fn):
         return fn
     if not inspect.isfunction(fn):
@@ -383,7 +383,7 @@ class RealTypedModuleMeta(EqxModuleMeta):
         bases,
         dict_,
         /,
-        strict: bool | StrictConfig = False,
+        strict: bool | None = False,
         typed_policy: TypedPolicy | dict | None = None,
         **kwargs,
     ):

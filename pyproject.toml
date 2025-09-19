@@ -1,11 +1,11 @@
 [project]
 name = "typinox"
-version = "0.2.1"
+version = "0.3.0rc0"
 description = "Enhanced runtime type-checked JAX modules"
 authors = [{ name = "Etaoin Wu", email = "me@etaoinwu.com" }]
+requires-python = ">=3.12"
 readme = "README.md"
 license = { file = "LICENSE" }
-
 keywords = [
     "jax",
     "neural-networks",
@@ -29,33 +29,38 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Scientific/Engineering :: Mathematics",
 ]
-urls = { repository = "https://github.com/EtaoinWu/typinox" }
-
-requires-python = ">=3.12"
 dependencies = [
-    "beartype (>=0.20.2,<0.21.0)",
-    "equinox (>=0.12.1,<0.13.0)",
-    "jaxtyping (>=0.3.1,<0.4.0)",
-    "jax (>=0.5.3,<0.6.0)",
+    "beartype (>=0.22.0rc0)",
+    "equinox (>=0.13.0,<0.14.0)",
+    "jaxtyping (>=0.3.2,<0.4.0)",
+    "jax (>=0.7.2,<0.8.0)",
 ]
 
-[build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^8.3.5"
-pytest-cov = "^6.0.0"
-sphinx = "^8.2.3"
-sphinx-autobuild = "^2024.10.3"
-chex = "^0.1.89"
-ruff = "^0.9.9"
-pyright = "^1.1.399"
-mypy = "^1.15.0"
-sphinx-book-theme = "^1.1.4"
-
 [project.optional-dependencies]
-docs = ["sphinx>=8.2.3,<9.0", "sphinx-book-theme>=1.1.4,<2.0"]
+docs = [
+    "sphinx>=8.2.3,<9.0",
+    "sphinx-book-theme>=1.1.4,<2.0",
+]
+
+[project.urls]
+repository = "https://github.com/EtaoinWu/typinox"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.5,<9",
+    "pytest-cov>=6.0.0,<7",
+    "sphinx>=8.2.3,<9",
+    "sphinx-autobuild>=2024.10.3,<2025",
+    "chex>=0.1.89,<0.2",
+    "ruff>=0.9.9,<0.10",
+    "pyright>=1.1.399,<2",
+    "mypy>=1.15.0,<2",
+    "sphinx-book-theme>=1.1.4,<2",
+]
 
 [tool.ruff]
 line-length = 80
