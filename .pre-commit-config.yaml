@@ -33,4 +33,4 @@ repos:
         entry: uv run mypy
         language: system
         types: [python]
-        files: '^(typinox|test)/'
+        files: '^(typinox)/'

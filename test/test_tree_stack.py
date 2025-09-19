@@ -1,3 +1,5 @@
+from typing import Any
+
 import chex
 import jax
 from beartype.door import is_bearable
@@ -8,13 +10,18 @@ import typinox as tpx
 from typinox import Vmapped
 
 
+def my_is_bearable(x: Any, T) -> bool:  # noqa: F821
+    """To make pyright happy."""
+    return is_bearable(x, T)
+
+
 def test_unstack_simple():
     t = jnp.arange(6).reshape(3, 2)
     u = jnp.arange(45).reshape(3, 5, 3)
     l = (t, u)
     s = list(tpx.tree.unstack(l))
     assert len(s) == 3
-    assert is_bearable(
+    assert my_is_bearable(
         s, list[tuple[Shaped[Array, " 2"], Shaped[Array, " 5 3"]]]
     )
 
@@ -30,7 +37,7 @@ def test_stack_simple():
     s = tpx.tree.stack(l)
     assert s[0].shape == (5, 2, 2)
     assert s[1]["a"].shape == (5, 1, 1, 3, 1, 1)
-    assert is_bearable(
+    assert my_is_bearable(
         s,
         Vmapped[
             tuple[

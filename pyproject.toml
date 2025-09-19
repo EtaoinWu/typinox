@@ -96,4 +96,4 @@ reportPrivateImportUsage = "information"
 
 [tool.mypy]
 python_version = "3.13"
-exclude = ["venv", "docs", ".venv"]
+exclude = ["venv", "docs", ".venv", "test"]

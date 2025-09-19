@@ -26,10 +26,10 @@ from equinox import (
     field as eqx_field,
 )
 from equinox._module._module import (
-    BoundMethod as EqxWrapMethod,
     _has_dataclass_init,
     _ModuleMeta as EqxModuleMeta,
 )
+from equinox._module._prebuilt import BoundMethod as EqxWrapMethod
 from jaxtyping import jaxtyped
 
 from ._vmapped import (
