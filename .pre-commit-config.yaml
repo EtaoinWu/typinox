@@ -12,25 +12,25 @@ repos:
     hooks:
       - id: ruff format
         name: Ruff formatter
-        entry: poetry run ruff format
+        entry: uv run ruff format
         language: system
         types: [python]
         files: '^(typinox|test|docs)/'
       - id: ruff lint
         name: Ruff linter
-        entry: poetry run ruff check --fix
+        entry: uv run ruff check --fix
         language: system
         types: [python]
         files: '^(typinox|test|docs)/'
       - id: pyright
         name: Pyright type checker
-        entry: poetry run pyright
+        entry: uv run pyright
         language: system
         types: [python]
         files: '^(typinox|test)/'
       - id: mypy
         name: Mypy type checker
-        entry: poetry run mypy
+        entry: uv run mypy
         language: system
         types: [python]
-        files: '^(typinox|test)/'
+        files: '^(typinox)/'

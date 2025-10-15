@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Any
 
 import beartype
 import beartype.roar
@@ -7,6 +8,11 @@ from beartype import beartype as typechecker
 from beartype.door import is_bearable
 
 from typinox import ValidatedT, ValidationFailed
+
+
+def my_is_bearable(x: Any, T) -> bool:
+    """To make pyright happy."""
+    return is_bearable(x, T)
 
 
 class ClassA:
@@ -149,13 +155,13 @@ def test_bad_type(cls, fn):
 
 
 def test_validator_unrelated():
-    assert is_bearable(1, ValidatedT[int])
-    assert not is_bearable(1, ValidatedT[str])
+    assert my_is_bearable(1, ValidatedT[int])
+    assert not my_is_bearable(1, ValidatedT[str])
 
 
 def test_validator_union():
-    assert not is_bearable(1, ValidatedT[ClassA | ClassB])
-    assert is_bearable(ClassA(1, 2), ValidatedT[ClassA | ClassB])
-    assert is_bearable(ClassB(2, 1), ValidatedT[ClassA | ClassB])
-    assert not is_bearable(ClassA(-1, 2), ValidatedT[ClassA | ClassB])
-    assert not is_bearable(ClassB(-2, 1), ValidatedT[ClassA | ClassB])
+    assert not my_is_bearable(1, ValidatedT[ClassA | ClassB])
+    assert my_is_bearable(ClassA(1, 2), ValidatedT[ClassA | ClassB])
+    assert my_is_bearable(ClassB(2, 1), ValidatedT[ClassA | ClassB])
+    assert not my_is_bearable(ClassA(-1, 2), ValidatedT[ClassA | ClassB])
+    assert not my_is_bearable(ClassB(-2, 1), ValidatedT[ClassA | ClassB])

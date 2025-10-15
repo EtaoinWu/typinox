@@ -1,3 +1,4 @@
+import jaxtyping
 from beartype.typing import Generator, Iterable
 from jax import (
     numpy as jnp,
@@ -5,6 +6,8 @@ from jax import (
 )
 
 from .vmapped import Vmapped
+
+PyTreeDef = type[jaxtyping.PyTreeDef]  # to make mypy happy
 
 
 def stack[T](trees: Iterable[T]) -> Vmapped[T, " n"]:
@@ -42,7 +45,7 @@ def stack[T](trees: Iterable[T]) -> Vmapped[T, " n"]:
 
     """
     leaves_list = []
-    treedef_list = []
+    treedef_list: list[PyTreeDef] = []
     for tree in trees:
         leaves, treedef = jt.flatten(tree)
         leaves_list.append(leaves)
@@ -89,6 +92,7 @@ def unstack[T](tree: Vmapped[T, " _"]) -> Generator[T]:
     ...      ]
     >>> chex.assert_trees_all_equal(aa, bb)
     """
+    treedef: PyTreeDef  # to make mypy happy
     leaves, treedef = jt.flatten(tree)
     n_trees = leaves[0].shape[0]
     for i in range(n_trees):

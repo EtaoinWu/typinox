@@ -152,7 +152,7 @@ def instancecheck_vmapped(
 
     dim_left, dim_right = dims
     nodedefs, treedef = jt.flatten_with_path(obj)
-    leaves = []
+    leaves: list[Any] = []
     for key_path, arr in nodedefs:
         # the case where `arr` is a string needs to be handled separately...
         if isinstance(arr, str):

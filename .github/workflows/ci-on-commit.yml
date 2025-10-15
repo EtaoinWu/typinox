@@ -2,7 +2,7 @@ name: Python CI on Commit
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "dev" ]
   pull_request:
     branches: [ "main" ]
 
@@ -14,43 +14,33 @@ jobs:
         python-version: ["3.12", "3.13"]
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-    - name: Set up Python ${{ matrix.python-version }}
-      id: setup-python
-      uses: actions/setup-python@v5
+    # Step 1: Replace Poetry installation with uv setup
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v6
       with:
         python-version: ${{ matrix.python-version }}
+        enable-cache: true
+        cache-suffix: venv-${{ runner.os }}-${{ matrix.python-version }}
 
-    - name: Install Poetry
-      uses: snok/install-poetry@v1
-      with:
-        version: latest
-        virtualenvs-create: true
-        virtualenvs-in-project: true
-
-    - name: Load cached venv
-      id: cached-poetry-dependencies
-      uses: actions/cache@v4
-      with:
-        path: .venv
-        key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
-
+    # Step 2: Install dependencies using uv
     - name: Install dependencies
-      if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-      run: poetry install --with dev
+      run: uv sync --dev
 
+    # Step 3: Run the linting and testing commands using uv
     - name: Run Ruff Check
-      run: poetry run ruff check .
+      run: uv run ruff check .
 
     - name: Run Ruff Format Check
-      run: poetry run ruff format --check .
+      run: uv run ruff format --check .
 
     - name: Run Pytest
-      run: poetry run pytest ./test
+      run: uv run pytest
 
     - name: Run Pyright
-      run: poetry run pyright .
+      run: uv run pyright .
 
     - name: Run MyPy
-      run: poetry run mypy .
+      run: uv run mypy .

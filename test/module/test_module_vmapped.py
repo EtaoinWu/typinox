@@ -1,4 +1,4 @@
-from typing import Self
+from typing import Any, Self
 
 import jax
 import pytest
@@ -19,6 +19,11 @@ from typinox import (
 from typinox.tree import unstack
 
 set_debug_mode(True)
+
+
+def my_is_bearable(x: Any, T) -> bool:
+    """To make pyright happy."""
+    return is_bearable(x, T)
 
 
 class SinWave(TypedModule):
@@ -58,8 +63,8 @@ def test_simple_vmap():
     amps = jnp.array([0.5, 1.0, 1.5])
     waves = jax.vmap(SinWave)(freqs, phases, amps)
     assert isinstance(waves, SinWave)
-    assert not is_bearable(waves, SinWaveT)
-    assert is_bearable(waves, Vmapped[SinWaveT, "3"])
+    assert not my_is_bearable(waves, SinWaveT)
+    assert my_is_bearable(waves, Vmapped[SinWaveT, "3"])
 
     nums = jnp.array([1.0, 2.0, 3.0])
 
@@ -112,13 +117,13 @@ def test_multi_waves():
         return MultiWaves(n, tuple(unstack(waves)), tuple(shifts))
 
     mw = create_multiwave(jnp.array(3.0))
-    assert is_bearable(mw, MultiWavesT)
-    assert is_bearable(mw(jnp.array(4.0)), Float[Scalar, ""])
+    assert my_is_bearable(mw, MultiWavesT)
+    assert my_is_bearable(mw(jnp.array(4.0)), Float[Scalar, ""])
 
     leaves, treedef = jt.flatten(mw)
     leaves[-1] = jnp.array([4.0, 3.0])
     bad_mw = jt.unflatten(treedef, leaves)
-    assert not all([is_bearable(bad_mw, MultiWavesT) for _ in range(30)])
+    assert not all([my_is_bearable(bad_mw, MultiWavesT) for _ in range(30)])
 
     with pytest.raises(TypeError):
         mw(jnp.array([4.0, 3.0]))
@@ -128,8 +133,8 @@ def test_multi_waves():
 
     mws = jax.vmap(create_multiwave)(jnp.array([1.0, 2.0, 3.0]))
     assert isinstance(mws, MultiWaves)
-    assert not is_bearable(mws, MultiWavesT)
-    assert is_bearable(mws, Vmapped[MultiWavesT, "c"])
+    assert not my_is_bearable(mws, MultiWavesT)
+    assert my_is_bearable(mws, Vmapped[MultiWavesT, "c"])
 
 
 class SegmentTree(TypedModule):
@@ -208,7 +213,8 @@ SegmentTreeT = ValidatedT[SegmentTree]
 def test_segment_tree():
     arr = jnp.sin(jnp.arange(20))
     st = SegmentTree.build(arr)
-    assert is_bearable(st, SegmentTreeT)
+    assert st is not None
+    assert my_is_bearable(st, SegmentTreeT)
 
     for i, j in [(3, 7), (6, 16), (0, 15), (-3, 37)]:
         st_value = st.query(i, j)
@@ -229,15 +235,17 @@ def test_segment_tree():
         jnp.array([1.0, 2.0, 3.0]), jnp.array([0.0, 1.0, 2.0])
     )
     assert isinstance(sts, SegmentTree)
-    assert not is_bearable(sts, SegmentTreeT)
+    assert not my_is_bearable(sts, SegmentTreeT)
     sums = jax.vmap(elim_st)(sts)
 
     with jaxtyped("context"):  # type: ignore
-        assert is_bearable(sts, Vmapped[SegmentTreeT, "c"])
-        assert is_bearable(sums, Vmapped[tuple[(Float[Scalar, ""],) * 4], "c"])
+        assert my_is_bearable(sts, Vmapped[SegmentTreeT, "c"])
+        assert my_is_bearable(
+            sums, Vmapped[tuple[(Float[Scalar, ""],) * 4], "c"]
+        )
 
     with jaxtyped("context"):  # type: ignore
-        assert is_bearable(sts, Vmapped[SegmentTreeT, "c"])
-        assert not is_bearable(
+        assert my_is_bearable(sts, Vmapped[SegmentTreeT, "c"])
+        assert not my_is_bearable(
             sums, Vmapped[tuple[(Float[Scalar, ""],) * 4], "c+1"]
         )

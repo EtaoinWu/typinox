@@ -21,18 +21,17 @@ jobs:
         with:
           python-version: '3.13'
 
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
+      # Step 1: Replace Poetry installation with uv setup
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
         with:
-          version: latest
-          virtualenvs-create: true
-          virtualenvs-in-project: true
+          python-version: "3.13"
+          enable-cache: true
+          cache-suffix: build-release
 
-      - name: Install dependencies
-        run: poetry install
-
+      # Step 2: Build package using uv
       - name: Build package
-        run: poetry build
+        run: uv build
 
       - name: Publish to Test PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
