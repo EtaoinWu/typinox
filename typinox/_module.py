@@ -15,6 +15,7 @@ from beartype.typing import (
     Never,
     Self,
     Sequence,
+    Unpack,
     cast,
     get_args,
     get_origin,
@@ -48,6 +49,7 @@ from .validator import ValidatedT, ValidationFailed, validate_str
 AnnotatedAlias = cast(type, type(Annotated[int, ">3"]))
 CallableAliasType = type(Callable[[int], float])
 GenericAliasType = type(tuple[int, str])
+UnpackType = type(Unpack[tuple[int, str]])
 UnionType = type(int | float)
 UnionGenericAlias = type(Self | None)
 
@@ -208,6 +210,11 @@ def sanitize_annotation(annotation: Any, cls: type) -> Any:
     if isinstance(annotation, UnionType | UnionGenericAlias):
         args = get_args(annotation)
         return fold_or([sanitize_annotation(arg, cls) for arg in args])
+    if isinstance(annotation, UnpackType):
+        args = get_args(annotation)
+        assert len(args) == 1
+        inner = args[0]
+        return Unpack[sanitize_annotation(inner, cls)]
     if isinstance(annotation, GenericAliasType):
         if isinstance(annotation, CallableAliasType):
             return annotation

@@ -1,7 +1,9 @@
-from beartype.typing import TYPE_CHECKING, Annotated
+from beartype.typing import TYPE_CHECKING, Annotated, Unpack
 from beartype.vale import Is
 
 from ._helper import func_to_bracket
+
+UnpackType = type(Unpack[tuple[int, str]])
 
 
 class ValidationFailed(ValueError):
@@ -55,6 +57,11 @@ else:
     def ValidatedT[_T](cls: type[_T]) -> type[_T]:
         from ._vmapped import AbstractVmapped
 
+        if isinstance(cls, UnpackType):
+            # sadly beartype cannot do custom validation
+            # on TypeVarTuple yet; see
+            # https://github.com/beartype/beartype/issues/562
+            return cls
         if not isinstance(cls, type):
             return Annotated[cls, TypinoxValid]
         if issubclass(cls, AbstractVmapped):
