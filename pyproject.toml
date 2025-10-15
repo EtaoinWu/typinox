@@ -1,6 +1,6 @@
 [project]
 name = "typinox"
-version = "0.3.0"
+version = "0.3.1a0"
 description = "Enhanced runtime type-checked JAX modules"
 authors = [{ name = "Etaoin Wu", email = "me@etaoinwu.com" }]
 requires-python = ">=3.12"
@@ -57,7 +57,7 @@ dev = [
     "sphinx-autobuild>=2024.10.3,<2025",
     "chex>=0.1.89,<0.2",
     "ruff>=0.9.9,<0.10",
-    "pyright>=1.1.399,<2",
+    "pyright>=1.1.406,<2",
     "mypy>=1.15.0,<2",
     "sphinx-book-theme>=1.1.4,<2",
 ]
