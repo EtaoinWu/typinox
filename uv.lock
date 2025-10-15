@@ -936,7 +936,7 @@ wheels = [
 
 [[package]]
 name = "typinox"
-version = "0.3.0rc0"
+version = "0.3.0"
 source = { editable = "." }
 dependencies = [
     { name = "beartype" },

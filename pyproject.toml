@@ -1,6 +1,6 @@
 [project]
 name = "typinox"
-version = "0.3.0rc0"
+version = "0.3.0"
 description = "Enhanced runtime type-checked JAX modules"
 authors = [{ name = "Etaoin Wu", email = "me@etaoinwu.com" }]
 requires-python = ">=3.12"
