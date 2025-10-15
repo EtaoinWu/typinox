@@ -30,10 +30,10 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Mathematics",
 ]
 dependencies = [
-    "beartype (>=0.22.0rc0)",
-    "equinox (>=0.13.0,<0.14.0)",
-    "jaxtyping (>=0.3.2,<0.4.0)",
+    "equinox (>=0.13.2,<0.14.0)",
+    "jaxtyping (>=0.3.3,<0.4.0)",
     "jax (>=0.7.2,<0.8.0)",
+    "beartype>=0.22.2",
 ]
 
 [project.optional-dependencies]
