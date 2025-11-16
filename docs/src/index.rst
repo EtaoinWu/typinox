@@ -23,7 +23,7 @@ To use Typinox, first install it using pip:
 
     $ pip install typinox
 
-Python 3.12 or later is required.
+Python 3.14 or later is required.
 
 Basic usage
 -----------
@@ -85,10 +85,10 @@ Dependencies
 Typinox aggressively tracks the latest versions of its dependencies.
 It currently depends on:
 
-- Python 3.12 (for `PEP 695`_ syntax)
-- ``beartype`` 0.20.0
-- ``jaxtyping`` 0.2.38
-- ``equinox`` 0.11.12
+- Python 3.14
+- ``beartype`` 0.22.5
+- ``jaxtyping`` 0.3.3
+- ``equinox`` 0.13.2
 
 Typinox may drop support for older versions of these dependencies
 if newer ones provide any benefits that Typinox can leverage.

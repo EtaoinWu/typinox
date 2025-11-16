@@ -18,7 +18,7 @@ def test_no_typecheck():
             return x
 
     obj = Module()
-    obj.f("not an int")
+    obj.f("not an int")  # type: ignore
 
 
 def test_skip_method():

@@ -1,4 +1,4 @@
-from beartype.typing import TYPE_CHECKING, Annotated, Unpack
+from beartype.typing import TYPE_CHECKING, Annotated, TypeAliasType, Unpack
 from beartype.vale import Is
 
 from ._helper import func_to_bracket
@@ -54,14 +54,14 @@ if TYPE_CHECKING:
 else:
 
     @func_to_bracket
-    def ValidatedT[_T](cls: type[_T]) -> type[_T]:
+    def ValidatedT[T](cls: type[T]) -> type[T]:
         from ._vmapped import AbstractVmapped
 
         if isinstance(cls, UnpackType):
-            # sadly beartype cannot do custom validation
-            # on TypeVarTuple yet; see
-            # https://github.com/beartype/beartype/issues/562
-            return cls
+            # workaround for weird Python typing restriction
+            # see: https://github.com/beartype/beartype/issues/562#issuecomment-3404611632
+            wrap_cls = TypeAliasType(cls.__name__, cls)
+            return Annotated[wrap_cls, TypinoxValid]
         if not isinstance(cls, type):
             return Annotated[cls, TypinoxValid]
         if issubclass(cls, AbstractVmapped):

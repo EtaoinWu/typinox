@@ -1,9 +1,9 @@
 [project]
 name = "typinox"
-version = "0.3.0"
+version = "0.4.0"
 description = "Enhanced runtime type-checked JAX modules"
 authors = [{ name = "Etaoin Wu", email = "me@etaoinwu.com" }]
-requires-python = ">=3.12"
+requires-python = ">=3.14"
 readme = "README.md"
 license = { file = "LICENSE" }
 keywords = [
@@ -23,8 +23,7 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: BSD License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Natural Language :: English",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Scientific/Engineering :: Mathematics",
@@ -32,8 +31,8 @@ classifiers = [
 dependencies = [
     "equinox (>=0.13.2,<0.14.0)",
     "jaxtyping (>=0.3.3,<0.4.0)",
-    "jax (>=0.7.2,<0.8.0)",
-    "beartype>=0.22.2",
+    "jax>=0.8.0,<0.9.0",
+    "beartype>=0.22.5",
 ]
 
 [project.optional-dependencies]
@@ -51,14 +50,14 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
-    "pytest>=8.3.5,<9",
-    "pytest-cov>=6.0.0,<7",
+    "pytest>=9.0.1,<10",
+    "pytest-cov>=7.0.0,<8",
     "sphinx>=8.2.3,<9",
     "sphinx-autobuild>=2024.10.3,<2025",
     "chex>=0.1.89,<0.2",
-    "ruff>=0.9.9,<0.10",
-    "pyright>=1.1.399,<2",
-    "mypy>=1.15.0,<2",
+    "ruff>=0.14.5,<0.15",
+    "pyright>=1.1.407,<2",
+    "mypy>=1.18.2,<2",
     "sphinx-book-theme>=1.1.4,<2",
 ]
 
