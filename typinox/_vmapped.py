@@ -419,9 +419,9 @@ def make_vmapped(name, inner, dim_str, checker):
 def get_vmapped_origin_or_none(cls):
     if not isinstance(cls, type):
         return None
-    if not issubclass(cls, AbstractVmapped):
-        return None
-    return cls.inner
+    if issubclass(cls, AbstractVmapped):
+        return cls.inner
+    return None
 
 
 class VmappedHelperMeta(type):

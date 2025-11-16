@@ -54,7 +54,7 @@ if TYPE_CHECKING:
 else:
 
     @func_to_bracket
-    def ValidatedT[_T](cls: type[_T]) -> type[_T]:
+    def ValidatedT[T](cls: type[T]) -> type[T]:
         from ._vmapped import AbstractVmapped
 
         if isinstance(cls, UnpackType):
