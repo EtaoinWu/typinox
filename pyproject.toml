@@ -1,6 +1,6 @@
 [project]
 name = "typinox"
-version = "0.5.0"
+version = "0.5.1"
 description = "Enhanced runtime type-checked JAX modules"
 authors = [{ name = "Etaoin Wu", email = "me@etaoinwu.com" }]
 requires-python = ">=3.14"
@@ -30,8 +30,8 @@ classifiers = [
 ]
 dependencies = [
     "equinox>=0.13.8,<0.14.0",
-    "jaxtyping>=0.3.9,<0.4.0",
-    "jax>=0.10.0,<0.11.0",
+    "jaxtyping>=0.3.10,<0.4.0",
+    "jax>=0.10.1,<0.11.0",
     "beartype>=0.22.9",
 ]
 
