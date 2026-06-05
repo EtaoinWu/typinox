@@ -19,13 +19,13 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: '3.14'
 
       # Step 1: Replace Poetry installation with uv setup
       - name: Set up uv
         uses: astral-sh/setup-uv@v6
         with:
-          python-version: "3.13"
+          python-version: "3.14"
           enable-cache: true
           cache-suffix: build-release
 
