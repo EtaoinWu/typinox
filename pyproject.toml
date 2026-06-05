@@ -35,12 +35,6 @@ dependencies = [
     "beartype>=0.22.9",
 ]
 
-[project.optional-dependencies]
-docs = [
-    "sphinx>=8.2.3,<9.0",
-    "sphinx-book-theme>=1.2.0,<2.0",
-]
-
 [project.urls]
 repository = "https://github.com/EtaoinWu/typinox"
 
