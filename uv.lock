@@ -902,12 +902,6 @@ dependencies = [
     { name = "jaxtyping" },
 ]
 
-[package.optional-dependencies]
-docs = [
-    { name = "sphinx" },
-    { name = "sphinx-book-theme" },
-]
-
 [package.dev-dependencies]
 dev = [
     { name = "basedpyright" },
@@ -927,10 +921,7 @@ requires-dist = [
     { name = "equinox", specifier = ">=0.13.8,<0.14.0" },
     { name = "jax", specifier = ">=0.10.0,<0.11.0" },
     { name = "jaxtyping", specifier = ">=0.3.9,<0.4.0" },
-    { name = "sphinx", marker = "extra == 'docs'", specifier = ">=8.2.3,<9.0" },
-    { name = "sphinx-book-theme", marker = "extra == 'docs'", specifier = ">=1.2.0,<2.0" },
 ]
-provides-extras = ["docs"]
 
 [package.metadata.requires-dev]
 dev = [

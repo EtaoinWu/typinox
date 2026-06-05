@@ -12,7 +12,7 @@ repos:
     hooks:
       - id: ruff format
         name: Ruff formatter
-        entry: uv run ruff format
+        entry: uv run ruff format --check
         language: system
         types: [python]
         files: '^(typinox|test|docs)/'

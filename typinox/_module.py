@@ -411,13 +411,20 @@ class RealTypedModuleMeta(EqxModuleMeta):
         bases: tuple[type, ...],
         dict_: dict[str, Any],
         /,
+        is_abstract: bool = False,
         strict: bool | None = False,
         typed_policy: TypedPolicy | dict[str, Any] | None = None,
         **kwargs: Any,
     ):
         # [Step 1] Create the Module as normal.
         cls = super().__new__(
-            mcs, name, bases, dict_, strict=strict, **kwargs
+            mcs,
+            name,
+            bases,
+            dict_,
+            is_abstract=is_abstract,
+            strict=strict,
+            **kwargs,
         )
         # Assumption:
         # - Every non-magic normal method is wrapped by Equinox.
