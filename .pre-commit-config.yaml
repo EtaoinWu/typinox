@@ -1,5 +1,5 @@
 default_language_version:
-  python: python3.13
+  python: python3.14
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -22,9 +22,9 @@ repos:
         language: system
         types: [python]
         files: '^(typinox|test|docs)/'
-      - id: pyright
-        name: Pyright type checker
-        entry: uv run pyright
+      - id: basedpyright
+        name: BasedPyright type checker
+        entry: uv run basedpyright
         language: system
         types: [python]
         files: '^(typinox|test)/'

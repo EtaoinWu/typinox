@@ -1,3 +1,5 @@
+# pyright: basic
+
 from typing import Self
 
 import jax

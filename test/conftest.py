@@ -1,3 +1,5 @@
+# pyright: basic
+
 import chex
 import equinox
 import jax

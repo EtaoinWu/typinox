@@ -1,3 +1,5 @@
+# pyright: basic
+
 import chex
 from beartype.typing import Self
 from jax import (

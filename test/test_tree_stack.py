@@ -1,3 +1,5 @@
+# pyright: basic
+
 from typing import Any
 
 import chex
@@ -69,7 +71,9 @@ def test_stack_unstack():
     yl = [f(x) for x in xl]
 
     chex.assert_trees_all_equal(ys, tpx.tree.stack(tpx.tree.unstack(ys)))
-    chex.assert_trees_all_equal(yl, list(tpx.tree.unstack(tpx.tree.stack(yl))))
+    chex.assert_trees_all_equal(
+        yl, list(tpx.tree.unstack(tpx.tree.stack(yl)))
+    )
 
     chex.assert_trees_all_equal(ys, tpx.tree.stack(yl))
     chex.assert_trees_all_equal(yl, list(tpx.tree.unstack(ys)))

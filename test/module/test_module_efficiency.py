@@ -1,4 +1,6 @@
-from typing import Self
+# pyright: basic
+
+from typing import Self, override
 from unittest.mock import Mock
 
 from beartype.door import die_if_unbearable
@@ -39,18 +41,21 @@ def test_diamond_inheritance():
     class B(A):
         b: Annotated[int, Is[happy_func(1)]]
 
+        @override
         def __validate__(self):
             return self.b >= 0 and quacks[1]()
 
     class C(A):
         c: Annotated[int, Is[happy_func(2)]]
 
+        @override
         def __validate__(self):
             return self.c >= 0 and quacks[2]()
 
     class D(B, C):
         d: Annotated[int, Is[happy_func(3)]]
 
+        @override
         def __validate__(self):
             return self.d >= 0 and quacks[3]()
 
@@ -62,16 +67,16 @@ def test_diamond_inheritance():
     for q in quacks:
         q.assert_called_once()
         q.reset_mock()
-    for h, num in zip(happys, [9, 12, 233, 7]):
+    for h, num in zip(happys, [9, 12, 233, 7], strict=True):
         h.assert_called_once_with(num)
         h.reset_mock()
 
-    die_if_unbearable(obj, ValidatedT[D])
+    die_if_unbearable(obj, ValidatedT[D])  # pyright: ignore[reportArgumentType]
 
     for q in quacks:
         q.assert_called_once()
         q.reset_mock()
-    for h, num in zip(happys, [9, 12, 233, 7]):
+    for h, num in zip(happys, [9, 12, 233, 7], strict=True):
         h.assert_called_once_with(num)
         h.reset_mock()
 
@@ -81,7 +86,7 @@ def test_diamond_inheritance():
     for q in quacks:
         assert q.call_count == 2
         q.reset_mock()
-    for h, num in zip(happys, [9, 12, 233, 7]):
+    for h, num in zip(happys, [9, 12, 233, 7], strict=True):
         assert h.call_count == 2
         h.assert_called_with(num)
         h.reset_mock()

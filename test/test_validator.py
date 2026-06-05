@@ -1,3 +1,5 @@
+# pyright: basic
+
 from dataclasses import dataclass
 from typing import Any
 

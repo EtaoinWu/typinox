@@ -8,13 +8,13 @@ They can be installed with the ``dev`` option:
 
 .. code-block:: bash
 
-    poetry install --with dev
+    uv sync --group dev
 
 And the tests can be run with:
 
 .. code-block:: bash
 
-    poetry run pytest ./test
+    uv run pytest ./test
 
 Linting
 -------
@@ -25,10 +25,10 @@ Usage:
 
 .. code-block:: bash
 
-    poetry run ruff check
-    poetry run ruff format --check
-    poetry run pyright .
-    poetry run mypy .
+    uv run ruff check
+    uv run ruff format --check
+    uv run pyright .
+    uv run mypy .
 
 Documentation
 -------------
@@ -38,10 +38,10 @@ The documentation can be built with:
 
 .. code-block:: bash
 
-    poetry run make -C docs html
+    uv run make -C docs html
 
 With ``sphinx-autobuild``, you can also build the documentation and serve it locally with:
 
 .. code-block:: bash
 
-    poetry run make -C docs serve
+    uv run make -C docs serve

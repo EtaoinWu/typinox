@@ -1,3 +1,5 @@
+# pyright: basic
+
 import jax.numpy as jnp
 import pytest
 from beartype import beartype

@@ -55,27 +55,49 @@ dev = [
     "sphinx>=8.2.3,<9",
     "sphinx-autobuild>=2024.10.3,<2025",
     "chex>=0.1.91",
-    "ruff>=0.15.12",
-    "pyright>=1.1.409",
-    "mypy>=1.20.2",
+    "ruff>=0.15.16",
+    "mypy>=2.1.0",
     "sphinx-book-theme>=1.2.0,<2",
+    "basedpyright>=1.39.6",
 ]
 
 [tool.ruff]
-line-length = 80
-target-version = "py313"
+line-length = 78
+target-version = "py314"
 
 [tool.ruff.lint]
 typing-modules = ["beartype.typing"]
 select = [
-    "E4",
-    "E7",
-    "E9",
-    "F",
-    "UP", # pyupgrade
-    "I",  # isort
+  "E",
+  "F",
+  "B", # bugbear
+  "UP", # pyupgrade
+  "I",  # isort
 ]
-ignore = ["F722", "E741"]
+ignore = [
+  "E501", # https://docs.astral.sh/ruff/rules/line-too-long/; handled by formatter for code
+  "E731", # https://docs.astral.sh/ruff/rules/lambda-assignment/
+  "B010", # https://docs.astral.sh/ruff/rules/set-attr-with-constant
+  "B905", # https://docs.astral.sh/ruff/rules/zip-without-explicit-strict/
+  # We use both ruff formatter and linter so some rules should always be disabled.
+  # See: https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules
+  "W191", # https://docs.astral.sh/ruff/rules/tab-indentation/
+  "E111", # https://docs.astral.sh/ruff/rules/indentation-with-invalid-multiple/
+  "E114", # https://docs.astral.sh/ruff/rules/indentation-with-invalid-multiple-comment/
+  "E117", # https://docs.astral.sh/ruff/rules/over-indented/
+  "D206", # https://docs.astral.sh/ruff/rules/docstring-tab-indentation/
+  "D300", # https://docs.astral.sh/ruff/rules/triple-single-quotes/
+  "Q000", # https://docs.astral.sh/ruff/rules/bad-quotes-inline-string/
+  "Q001", # https://docs.astral.sh/ruff/rules/bad-quotes-multiline-string/
+  "Q002", # https://docs.astral.sh/ruff/rules/bad-quotes-docstring/
+  "Q003", # https://docs.astral.sh/ruff/rules/avoidable-escaped-quote/
+  "COM812", # https://docs.astral.sh/ruff/rules/missing-trailing-comma/
+  "COM819", # https://docs.astral.sh/ruff/rules/prohibited-trailing-comma/
+  "ISC002", # https://docs.astral.sh/ruff/rules/multi-line-implicit-string-concatenation/
+  # The following are for jaxtyping
+  "F722", # https://docs.astral.sh/ruff/rules/forward-annotation-syntax-error/
+  "E741", # https://docs.astral.sh/ruff/rules/ambiguous-variable-name/
+]
 
 [tool.ruff.lint.per-file-ignores]
 "*.ipynb" = ["F401", "E731"]
@@ -87,12 +109,31 @@ combine-as-imports = true
 [tool.pytest.ini_options]
 addopts = "--cov=typinox --cov-report=term-missing:skip-covered --doctest-modules"
 
-[tool.pyright]
-pythonVersion = "3.13"
+[tool.basedpyright]
+pythonVersion = "3.14"
 exclude = ["venv", "docs", ".venv"]
-enableExperimentalFeatures = true
-reportPrivateImportUsage = "information"
+# respect "# type: ignore" comments
+enableTypeIgnoreComments = true
+# By default BasedPyright is very strict, so you almost certainly want to disable
+# some of the rules.
+# First, these turn off warnings about (yes) how you ignore warnings:
+reportIgnoreCommentWithoutRule = false
+reportUnnecessaryTypeIgnoreComment = false
+# A few typically noisy warnings are next.
+reportAny = false
+reportExplicitAny = false
+reportImplicitStringConcatenation = false
+reportPrivateImportUsage = false
+reportPrivateUsage = false
+reportPrivateLocalImportUsage = false
+# reportMissingImports = false
+# reportUnnecessaryIsInstance = false
+reportUnknownVariableType = false
+reportUnknownArgumentType = false
+reportUnknownMemberType = false
+reportUnknownParameterType = false
+
 
 [tool.mypy]
-python_version = "3.13"
+python_version = "3.14"
 exclude = ["venv", "docs", ".venv", "test"]

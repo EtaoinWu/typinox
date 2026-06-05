@@ -1,11 +1,11 @@
 import dataclasses
-from typing import Any, Protocol, overload
+from typing import Protocol, cast, overload
 
 
 @dataclasses.dataclass(frozen=True)
 class _FakeArray:
     shape: tuple[int, ...]
-    dtype: Any = dataclasses.field(default=None)
+    dtype: object | None = dataclasses.field(default=None)
 
 
 class NDArray(Protocol):
@@ -18,7 +18,7 @@ class NDArray(Protocol):
     def shape(self) -> tuple[int, ...]: ...
 
     @property
-    def dtype(self) -> Any: ...
+    def dtype(self) -> object: ...
 
 
 ShapeLike = int | tuple[int, ...] | NDArray
@@ -33,14 +33,14 @@ def shape_sanitize(shape: ShapeLike) -> tuple[int, ...]:
 
 
 @overload
-def ensure_shape(shape: ShapeLike, dim_spec: str, /): ...
+def ensure_shape(shape: ShapeLike, dim_spec: str, /) -> None: ...
 
 
 @overload
-def ensure_shape(name: str, shape: ShapeLike, dim_spec: str, /): ...
+def ensure_shape(name: str, shape: ShapeLike, dim_spec: str, /) -> None: ...
 
 
-def ensure_shape(*args):
+def ensure_shape(*args: object) -> None:
     """
     Ensure that the shape of an array matches :mod:`jaxtyping` named dimensions.
 
@@ -74,15 +74,25 @@ def ensure_shape(*args):
         shape, dim_spec = args
         name = ""
     elif len(args) == 3:
-        name, shape, dim_spec = args
+        raw_name, shape, dim_spec = args
+        if not isinstance(raw_name, str):
+            raise TypeError("shape name must be a string")
+        name = raw_name
     else:
         raise ValueError(f"invalid number of arguments: {len(args)}")
+    if isinstance(shape, str):
+        raise TypeError("shape must be a shape-like object")
+    if not isinstance(dim_spec, str):
+        raise TypeError("dimension spec must be a string")
+    shape = cast(ShapeLike, shape)
 
     obj = _FakeArray(shape_sanitize(shape))
-    if not isinstance(obj, Shaped[_FakeArray, dim_spec]):  # type: ignore
+    shaped_hint = cast(type, cast(object, Shaped[_FakeArray, dim_spec]))
+    if not isinstance(obj, shaped_hint):
         if name:
             raise ValidationFailed(
-                f'{name} has shape {shape} which does not match the named dimensions "{dim_spec}"'
+                f"{name} has shape {shape} which"
+                + f' does not match the named dimensions "{dim_spec}"'
             )
         else:
             raise ValidationFailed(
@@ -91,20 +101,22 @@ def ensure_shape(*args):
 
 
 @overload
-def ensure_shape_equal(shape1: ShapeLike, shape2: ShapeLike, /): ...
+def ensure_shape_equal(shape1: ShapeLike, shape2: ShapeLike, /) -> None: ...
 
 
 @overload
-def ensure_shape_equal(name: str, shape1: ShapeLike, shape2: ShapeLike, /): ...
+def ensure_shape_equal(
+    name: str, shape1: ShapeLike, shape2: ShapeLike, /
+) -> None: ...
 
 
 @overload
 def ensure_shape_equal(
     name1: str, shape1: ShapeLike, name2: str, shape2: ShapeLike, /
-): ...
+) -> None: ...
 
 
-def ensure_shape_equal(*args):
+def ensure_shape_equal(*args: object) -> None:
     """
     Ensure that the shapes of two arrays are equal.
 
@@ -143,11 +155,21 @@ def ensure_shape_equal(*args):
         name1 = name2 = ""
     elif len(args) == 3:
         name, shape1, shape2 = args
+        if not isinstance(name, str):
+            raise TypeError("shape name must be a string")
         name1 = name2 = name
     elif len(args) == 4:
-        name1, shape1, name2, shape2 = args
+        raw_name1, shape1, raw_name2, shape2 = args
+        if not isinstance(raw_name1, str) or not isinstance(raw_name2, str):
+            raise TypeError("shape names must be strings")
+        name1 = raw_name1
+        name2 = raw_name2
     else:
         raise ValueError(f"invalid number of arguments: {len(args)}")
+    if isinstance(shape1, str) or isinstance(shape2, str):
+        raise TypeError("shapes must be shape-like objects")
+    shape1 = cast(ShapeLike, shape1)
+    shape2 = cast(ShapeLike, shape2)
 
     if shape_sanitize(shape1) != shape_sanitize(shape2):
         raise ValidationFailed(

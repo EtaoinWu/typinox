@@ -1,3 +1,5 @@
+# pyright: basic
+
 import chex
 import equinox as eqx
 import jax
@@ -136,7 +138,7 @@ def test_vmapped_vmap_simple(Vmapped):
     """Test Vmapped with vmap using a basic function."""
 
     @eqx.filter_jit
-    def inner(x: Float[Scalar, ""]) -> tuple[str, Float[Array, "3"]]:
+    def inner(x: Float[Scalar, ""]) -> tuple[str, Float[Array, " 3"]]:
         y = x * jnp.ones(3)
         assert t(y, Float[Array, "3"])
         return "aaa", y

@@ -1,6 +1,6 @@
 import functools as ft
 from collections.abc import Callable
-from typing import Any, NoReturn
+from typing import Any, ClassVar, NoReturn, cast, override
 
 from beartype.door import is_bearable
 from jax import (
@@ -23,9 +23,11 @@ from .error import TypinoxAnnotationError
 _vmapped_dim = object()
 
 VMAPPED_LETTER = "$"
+type VmappedDims = tuple[tuple[Any, ...], tuple[Any, ...]]
+type VmappedChecker = Callable[[Any, Any], bool]
 
 
-def err_array_name(key_path: jtu.KeyPath) -> str:
+def err_array_name(key_path: jtu.KeyPath[Any]) -> str:
     """Generates a friendly name from a key path.
 
     Parameters
@@ -46,9 +48,9 @@ def err_array_name(key_path: jtu.KeyPath) -> str:
 
 def single_check_vmapped(
     arr: Array | Any,
-    key_path: jtu.KeyPath,
-    dim_left: tuple,
-    dim_right: tuple,
+    key_path: jtu.KeyPath[Any],
+    dim_left: tuple[Any, ...],
+    dim_right: tuple[Any, ...],
     single_memo: dict[str, int],
     arg_memo: dict[str, Any],
 ) -> Array | str | Any:
@@ -90,7 +92,7 @@ def single_check_vmapped(
     right_idx = len(shape) - len(dim_right)
     if left_idx != 0:
         check = _check_dims(
-            dim_left,  # type: ignore
+            list(dim_left),  # type: ignore
             shape[:left_idx],
             single_memo,
             arg_memo,
@@ -99,7 +101,7 @@ def single_check_vmapped(
             return err_array_name(key_path) + ": " + check
     if right_idx != len(shape):
         check = _check_dims(
-            dim_right,  # type: ignore
+            list(dim_right),  # type: ignore
             shape[right_idx:],
             single_memo,
             arg_memo,
@@ -121,9 +123,9 @@ def single_check_vmapped(
 
 def instancecheck_vmapped(
     inner: type,
-    dims: tuple[tuple, tuple],
-    checker: Callable[[Any, type], bool],
-    obj,
+    dims: VmappedDims,
+    checker: VmappedChecker,
+    obj: Any,
     single_memo: dict[str, int],
     arg_memo: dict[str, Any],
 ) -> str:
@@ -184,17 +186,19 @@ def instancecheck_vmapped(
 
 
 class VmappedMeta(type):
-    def __instancecheck__(cls, obj):
+    @override
+    def __instancecheck__(cls, obj: Any) -> bool:
         return cls.__instancecheck_str__(obj) == ""
 
-    def __instancecheck_str__(cls, obj) -> str:
+    def __instancecheck_str__(cls, obj: Any) -> str:
         if (
             not hasattr(cls, "inner")
             or not hasattr(cls, "dims")
             or not hasattr(cls, "checker")
         ):
             raise TypinoxAnnotationError(
-                "Invalid `Vmapped` class; must have `inner`, `dims` and `checker` attributes."
+                "Invalid `Vmapped` class; must have `inner`, `dims` and `checker` "
+                "attributes."
             )
         single_memo, variadic_memo, pytree_memo, arg_memo = get_shape_memo()
         single_memo_bak = single_memo.copy()
@@ -203,10 +207,13 @@ class VmappedMeta(type):
         arg_memo_bak = arg_memo.copy()
 
         try:
+            inner = cast(type, cls.inner)  # pyright: ignore[reportAttributeAccessIssue]
+            dims = cast(VmappedDims, cls.dims)  # pyright: ignore[reportAttributeAccessIssue]
+            checker = cast(VmappedChecker, cls.checker)  # pyright: ignore[reportAttributeAccessIssue]
             check = instancecheck_vmapped(
-                cls.inner,  # type: ignore
-                cls.dims,  # type: ignore
-                cls.checker,  # type: ignore
+                inner,
+                dims,
+                checker,
                 obj,
                 single_memo,
                 arg_memo,
@@ -230,29 +237,37 @@ class VmappedMeta(type):
             )
             return check
 
-    def __repr__(cls):
+    @override
+    def __repr__(cls) -> str:
         return cls.__module__ + "." + cls.__qualname__
 
-    def __str__(cls):
+    @override
+    def __str__(cls) -> str:
         return cls.__module__ + "." + cls.__qualname__
 
 
 class AbstractVmapped(metaclass=VmappedMeta):
-    inner: type
-    dim_str: str
-    dims: tuple[tuple, tuple]
-    checker: Callable
-    base_name: str
+    inner: ClassVar[Any]
+    dim_str: ClassVar[str]
+    dims: ClassVar[VmappedDims]
+    checker: ClassVar[VmappedChecker]
+    base_name: ClassVar[str]
 
     @classmethod
-    def replace_inner(cls, inner):
+    def replace_inner(cls, inner: Any) -> type[AbstractVmapped]:
         return create_vmapped_class(
             cls.base_name, inner, cls.dim_str, cls.dims, cls.checker
         )
 
 
 @ft.cache
-def create_vmapped_class(base_name, inner, dim_str, dims, checker):
+def create_vmapped_class(
+    base_name: str,
+    inner: Any,
+    dim_str: str,
+    dims: VmappedDims,
+    checker: VmappedChecker,
+) -> type[AbstractVmapped]:
     name = f"{base_name}[{inner}, {dim_str}]"
     cls = VmappedMeta(
         name,
@@ -266,12 +281,12 @@ def create_vmapped_class(base_name, inner, dim_str, dims, checker):
         ),
     )
     cls.__module__ = "typinox"
-    return cls
+    return cast(type[AbstractVmapped], cls)
 
 
-def parse_dims(dim_str: str):
-    dims = []
-    for index, elem in enumerate(dim_str.split()):
+def parse_dims(dim_str: str) -> VmappedDims | None:
+    dims: list[Any] = []
+    for elem in dim_str.split():
         anonymous = False
         vmapped = False
         if "," in elem and "(" not in elem:
@@ -283,8 +298,7 @@ def parse_dims(dim_str: str):
             )
         if elem == "...":
             raise TypinoxAnnotationError(
-                "jaxtyping multiple axis not supported in Vmapped; "
-                "`...` is not allowed"
+                "jaxtyping multiple axis not supported in Vmapped; `...` is not allowed"
             )
         while True:
             if len(elem) == 0:
@@ -293,13 +307,13 @@ def parse_dims(dim_str: str):
             first_char = elem[0]
             if first_char == "#":
                 raise TypinoxAnnotationError(
-                    "jaxtyping broadcastable annotation is unsupported in Vmapped; "
-                    "`#foo` is not allowed"
+                    "jaxtyping broadcastable annotation is unsupported in "
+                    "Vmapped; `#foo` is not allowed"
                 )
             elif first_char == "*":
                 raise TypinoxAnnotationError(
-                    "jaxtyping multiple axis annotation is unsupported in Vmapped; "
-                    "`*foo` is not allowed"
+                    "jaxtyping multiple axis annotation is unsupported in "
+                    "Vmapped; `*foo` is not allowed"
                 )
             elif first_char == "_":
                 if anonymous:
@@ -311,18 +325,15 @@ def parse_dims(dim_str: str):
                 elem = elem[1:]
             elif first_char == "?":
                 raise TypinoxAnnotationError(
-                    "jaxtyping treepath-dependent annotation is unsupported in Vmapped; "
-                    "`?foo` is not allowed"
+                    "jaxtyping treepath-dependent annotation is unsupported "
+                    "in Vmapped; `?foo` is not allowed"
                 )
             elif first_char == VMAPPED_LETTER:
                 if vmapped:
                     raise TypinoxAnnotationError(
-                        "Do not use "
-                        + VMAPPED_LETTER
-                        + " twice to denote vmapped axes, e.g. `"
-                        + VMAPPED_LETTER
-                        + VMAPPED_LETTER
-                        + "` is not allowed"
+                        f"Do not use {VMAPPED_LETTER} twice to denote "
+                        f"vmapped axes, e.g. `{VMAPPED_LETTER}"
+                        f"{VMAPPED_LETTER}` is not allowed"
                     )
                 vmapped = True
                 elem = elem[1:]
@@ -349,9 +360,8 @@ def parse_dims(dim_str: str):
                 )
             if vmapped:
                 raise TypinoxAnnotationError(
-                    "Cannot have a fixed axis be vmapped, e.g. `"
-                    + VMAPPED_LETTER
-                    + "4` is not allowed."
+                    f"Cannot have a fixed axis be vmapped, e.g. "
+                    f"`{VMAPPED_LETTER}4` is not allowed."
                 )
             out = _FixedDim(elem_size, False)
         elif dim_type is _DimType.named:
@@ -370,21 +380,17 @@ def parse_dims(dim_str: str):
                 )
             if vmapped:
                 raise TypinoxAnnotationError(
-                    "Cannot have a symbolic axis be vmapped, "
-                    "e.g. `" + VMAPPED_LETTER + "foo+bar` is not allowed."
+                    "Cannot have a symbolic axis be vmapped, e.g. "
+                    f"`{VMAPPED_LETTER}foo+bar` is not allowed."
                 )
             out = _SymbolicDim(elem, False)
         dims.append(out)
     n_vmapped_dims = sum(1 for dim in dims if dim is _vmapped_dim)
     if n_vmapped_dims > 1:
         raise TypinoxAnnotationError(
-            "Only one axis can be marked as vmapped, e.g. `n "
-            + VMAPPED_LETTER
-            + " m p` is allowed, but `n "
-            + VMAPPED_LETTER
-            + " m "
-            + VMAPPED_LETTER
-            + " p` is not."
+            f"Only one axis can be marked as vmapped, e.g. `n "
+            f"{VMAPPED_LETTER} m p` is allowed, but `n "
+            f"{VMAPPED_LETTER} m {VMAPPED_LETTER} p` is not."
         )
     if n_vmapped_dims == 0:
         dims.append(_vmapped_dim)
@@ -396,7 +402,9 @@ def parse_dims(dim_str: str):
 
 
 @ft.cache
-def make_vmapped(name, inner, dim_str, checker):
+def make_vmapped(
+    name: str, inner: Any, dim_str: str, checker: VmappedChecker
+) -> Any:
     dims = parse_dims(dim_str)
     if dims is None:
         return inner
@@ -416,7 +424,7 @@ def make_vmapped(name, inner, dim_str, checker):
     )
 
 
-def get_vmapped_origin_or_none(cls):
+def get_vmapped_origin_or_none(cls: Any) -> Any | None:
     if not isinstance(cls, type):
         return None
     if issubclass(cls, AbstractVmapped):
@@ -425,19 +433,24 @@ def get_vmapped_origin_or_none(cls):
 
 
 class VmappedHelperMeta(type):
-    def __instancecheck__(cls, obj) -> NoReturn:
+    @override
+    def __instancecheck__(cls, _obj: Any) -> NoReturn:
         raise TypinoxAnnotationError(
             "Do not use `Vmapped` as a type hint without specifying"
             " the PyTree structure and the vmapped dimension."
         )
 
-    def __getitem__(cls, params):
+    def __getitem__(cls, params: Any) -> Any:
         if not isinstance(params, tuple) or len(params) != 2:
             raise TypinoxAnnotationError(
                 "Vmapped type hint must be a tuple of a PyTree structure and a string."
             )
-        checker = getattr(cls, "checker", isinstance)
+        checker = cast(VmappedChecker, getattr(cls, "checker", isinstance))
         inner, dim_str = params
+        if not isinstance(dim_str, str):
+            raise TypinoxAnnotationError(
+                "Vmapped type hint must be parameterized by a string dimension spec."
+            )
         dim_str = dim_str.strip()
         return make_vmapped(cls.__qualname__, inner, dim_str, checker)
 
@@ -459,7 +472,8 @@ class VmappedT(metaclass=VmappedHelperMeta):
     - A named dimension, such as ``a``.
     - A fixed dimension, such as ``3``.
     - A symbolic expression in terms of other variable-size axes, such as ``a-1``.
-    - ``_``: An anonymous dimension, which is a named dimension that is not matched to any other dimension.
+    - ``_``: An anonymous dimension, which is a named dimension that is not matched
+      to any other dimension.
 
     They function similarly to the dimension specifiers in :mod:`jaxtyping`. It can also be:
 
@@ -467,22 +481,25 @@ class VmappedT(metaclass=VmappedHelperMeta):
       This is optional, and if omitted, it is assumed that ``$`` appears in the end.
 
       For example, if ``T`` is ``Float[Array, "3 4"]``,
-      then ``Vmapped[T, "batch"]`` and ``Vmapped[T, "batch $"]`` are equivalent to ``Float[Array, "batch 3 4"]``;
+      then ``Vmapped[T, "batch"]`` and ``Vmapped[T, "batch $"]`` are equivalent to
+      ``Float[Array, "batch 3 4"]``;
       ``Vmapped[T, "$ batch"]`` is equivalent to ``Float[Array, "3 4 batch"]``.
 
-    Other jaxtyping array annotation modifiers, such as ``*``, ``?``, and ``...`` are not supported.
+    Other jaxtyping array annotation modifiers, such as ``*``, ``?``, and ``...`` are
+    not supported.
 
     .. warning::
 
-        None of the axes specified in ``shape`` can be zero (e.g., ``Vmapped[T, "0 3"]`` is invalid).
+        None of the axes specified in ``shape`` can be zero (e.g., ``Vmapped[T, "0 3"]``
+        is invalid).
 
     **Inner type**
 
     The ``inner`` is the type hint for a PyTree structure of arrays.
     It can be any valid type hint, including another ``VmappedT`` type hint.
 
-    It is most useful when ``isinstance(x, inner)`` also checks the shape of arrays in ``x``.
-    Examples of such ``inner`` hints include:
+    It is most useful when ``isinstance(x, inner)`` also checks the shape of arrays
+    in ``x``. Examples of such ``inner`` hints include:
 
     - **(jax or numpy) arrays**:
       ``isinstance(x, VmappedT[Array, "b c"])`` checks that
@@ -493,11 +510,12 @@ class VmappedT(metaclass=VmappedHelperMeta):
       and that their first two dimensions match.
     - **jaxtyping shaped arrays**:
       ``VmappedT[Float[Array, "b c"], "a"]`` is equivalent to ``VmappedT[Array, "a b c"]``,
-      while ``VmappedT[Float[Array, "b c"], "$ a"]`` is equivalent to ``VmappedT[Array, "b c a"]``.
+      while ``VmappedT[Float[Array, "b c"], "$ a"]`` is equivalent to
+      ``VmappedT[Array, "b c a"]``.
     - **Typinox Modules**:
       ``isinstance(x, VmappedT[M, "b c"])`` checks that
-      ``x`` is an instance of a :class:`TypedModule <typinox.module.TypedModule>` class ``M``,
-      and each array member of ``x`` has at least two initial dimensions.
+      ``x`` is an instance of a :class:`TypedModule <typinox.module.TypedModule>` class
+      ``M``, and each array member of ``x`` has at least two initial dimensions.
       If these dimensions are removed, the resulting object should match ``M``.
     """
 
@@ -506,7 +524,7 @@ class VmappedT(metaclass=VmappedHelperMeta):
             "Do not instantiate `VmappedT` directly; use it as a type hint."
         )
 
-    checker = is_bearable
+    checker: ClassVar[VmappedChecker] = is_bearable
 
 
 class VmappedI(metaclass=VmappedHelperMeta):
@@ -524,4 +542,4 @@ class VmappedI(metaclass=VmappedHelperMeta):
             "Do not instantiate `VmappedI` directly; use it as a type hint."
         )
 
-    checker = isinstance
+    checker: ClassVar[VmappedChecker] = isinstance

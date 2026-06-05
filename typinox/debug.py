@@ -1,4 +1,5 @@
 import warnings
+from typing import TextIO
 
 debug_mode = False
 
@@ -11,21 +12,34 @@ class TypinoxUnknownFunctionWarning(UserWarning):
     pass
 
 
-def set_debug_mode(value: bool = True):
+def set_debug_mode(value: bool = True) -> None:
     global debug_mode
     debug_mode = value
 
 
-def debug_print(*args, **kwargs):
+def debug_print(
+    *args: object,
+    sep: str | None = " ",
+    end: str | None = "\n",
+    file: TextIO | None = None,
+    flush: bool = False,
+) -> None:
     if debug_mode:
-        print(*args, **kwargs)
+        print(*args, sep=sep, end=end, file=file, flush=flush)
 
 
-def debug_warn(*args, **kwargs):
+def debug_warn(
+    message: Warning | str,
+    category: type[Warning] | None = None,
+    stacklevel: int = 1,
+    source: object | None = None,
+) -> None:
     if debug_mode:
-        warnings.warn(*args, **kwargs)
+        warnings.warn(
+            message, category=category, stacklevel=stacklevel, source=source
+        )
 
 
-def debug_raise(err: type[Exception], *args, **kwargs):
+def debug_raise(err: type[Exception], *args: object) -> None:
     if debug_mode:
-        raise err(*args, **kwargs)
+        raise err(*args)

@@ -1,3 +1,5 @@
+# pyright: basic
+
 import chex
 from jax import (
     numpy as jnp,
@@ -18,6 +20,7 @@ class GaussianGenerator(TypedModule):
     linear: Float[Array, "d d"]
 
     def __init__(self, mean: Float[Array, " d"], cov: Float[Array, "d d"]):
+        super().__init__()
         self.mean = mean
         self.linear = jnp.linalg.cholesky(cov, upper=True)
 

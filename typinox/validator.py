@@ -1,3 +1,6 @@
+from collections.abc import Callable
+from typing import cast
+
 from beartype.typing import TYPE_CHECKING, Annotated, TypeAliasType, Unpack
 from beartype.vale import Is
 
@@ -18,22 +21,26 @@ class ValidateProto:
         return ""
 
 
-def validate_str_single(cls, obj) -> str:
-    if cls.__dict__.get("__validate_str__", None) is not None:
-        validated = cls.__validate_str__(obj)
+def validate_str_single(cls: type[object], obj: object) -> str:
+    validate_str_fn = cls.__dict__.get("__validate_str__", None)
+    if validate_str_fn is not None:
+        validate_str_fn = cast(Callable[[object], str], validate_str_fn)
+        validated = validate_str_fn(obj)
         if validated != "":
             return validated
-    if cls.__dict__.get("__validate__", None) is not None:
+    validate_fn = cls.__dict__.get("__validate__", None)
+    if validate_fn is not None:
+        validate_fn = cast(Callable[[object], bool], validate_fn)
         try:
-            validated = cls.__validate__(obj)
+            is_valid = validate_fn(obj)
         except ValidationFailed as e:
             return str(e)
-        if validated is False:
+        if is_valid is False:
             return "the custom validation failed"
     return ""
 
 
-def validate_str(obj) -> str:
+def validate_str(obj: object) -> str:
     cls = type(obj)
     for kls in cls.__mro__[
         :-1
@@ -44,7 +51,7 @@ def validate_str(obj) -> str:
     return ""
 
 
-def _validate(obj):
+def _validate(obj: object) -> bool:
     return validate_str(obj) == ""
 
 

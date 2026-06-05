@@ -1,3 +1,5 @@
+# pyright: basic
+
 from typing import Any, Self
 
 import jax
@@ -34,7 +36,7 @@ class SinWave(TypedModule):
     def __call__(self, x: Float[Scalar, ""]) -> Float[Scalar, ""]:
         return self.amp * jnp.sin(self.freq * x + self.phase)
 
-    def rotate_90_degs_bad(self) -> Vmapped[Self, "4"]:
+    def rotate_90_degs_bad(self) -> Vmapped[Self, " 4"]:
         return self
 
     def actual_rotate_90_degs(self):
@@ -50,7 +52,7 @@ class SinWave(TypedModule):
     def rotate_90_degs_bad_sig(self) -> Self:
         return self.actual_rotate_90_degs()
 
-    def rotate_90_degs_good(self) -> Vmapped[Self, "4"]:
+    def rotate_90_degs_good(self) -> Vmapped[Self, " 4"]:
         return self.actual_rotate_90_degs()
 
 
@@ -239,13 +241,13 @@ def test_segment_tree():
     sums = jax.vmap(elim_st)(sts)
 
     with jaxtyped("context"):  # type: ignore
-        assert my_is_bearable(sts, Vmapped[SegmentTreeT, "c"])
+        assert my_is_bearable(sts, Vmapped[SegmentTreeT, " c"])
         assert my_is_bearable(
-            sums, Vmapped[tuple[(Float[Scalar, ""],) * 4], "c"]
+            sums, Vmapped[tuple[(Float[Scalar, ""],) * 4], " c"]
         )
 
     with jaxtyped("context"):  # type: ignore
-        assert my_is_bearable(sts, Vmapped[SegmentTreeT, "c"])
+        assert my_is_bearable(sts, Vmapped[SegmentTreeT, " c"])
         assert not my_is_bearable(
-            sums, Vmapped[tuple[(Float[Scalar, ""],) * 4], "c+1"]
+            sums, Vmapped[tuple[(Float[Scalar, ""],) * 4], " c+1"]
         )

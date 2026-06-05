@@ -1,4 +1,8 @@
+# pyright: reportUnreachable=false
+
 import typing
+
+__all__ = ["Vmapped", "VmappedI", "VmappedT"]
 
 if typing.TYPE_CHECKING:
     from typing import (

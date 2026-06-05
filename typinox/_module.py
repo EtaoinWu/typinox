@@ -4,6 +4,7 @@ import warnings
 import weakref
 from abc import ABCMeta
 from types import FunctionType
+from typing import override
 
 import beartype
 from beartype.door import is_bearable
@@ -46,39 +47,43 @@ from .error import TypinoxNotImplementedError, TypinoxTypeViolation
 from .shaped import ensure_shape as ensure_shape
 from .validator import ValidatedT, ValidationFailed, validate_str
 
-AnnotatedAlias = cast(type, type(Annotated[int, ">3"]))
+AnnotatedAlias = cast(type, type(cast(object, Annotated[int, ">3"])))
 CallableAliasType = type(Callable[[int], float])
 GenericAliasType = type(tuple[int, str])
 UnpackType = type(Unpack[tuple[int, str]])
 UnionType = type(int | float)
 UnionGenericAlias = type(Self | None)
 
+type CallableAny = Callable[..., Any]
+
 
 @overload
-def field(): ...
+def field():
+    dataclasses.Field[Any]
 
 
 @overload
 def field(
     *,
     typecheck: bool = True,
-    converter: Callable[[Any], Any] = ...,
+    converter: Callable[[Any], Any] | Any = ...,
     static: bool = False,
     default: Any = ...,
     default_factory: Callable[[], Any] | Any = ...,
     init: bool = True,
     hash: bool | None = None,
     metadata: dict[str, Any] | None = None,
-    kw_only: bool = ...,
-): ...
+    kw_only: bool = False,
+):
+    dataclasses.Field[Any]
 
 
 def field(
     *,
     typecheck: bool = True,
     metadata: dict[str, Any] | None = None,
-    **kwargs,
-) -> dataclasses.Field:
+    **kwargs: Any,
+) -> dataclasses.Field[Any]:
     """Specify a field of a typinox typed module.
 
     Parameters
@@ -158,16 +163,22 @@ class TypedPolicy:
 
     always_validated: bool = dataclasses.field(default=True)
     typecheck_init_result: bool = dataclasses.field(default=True)
-    skip_methods: frozenset[str] = dataclasses.field(default_factory=frozenset)
+    skip_methods: frozenset[str] = dataclasses.field(
+        default_factory=frozenset
+    )
 
     def __init__(
         self,
         always_validated: bool = True,
         typecheck_init_result: bool = True,
-        skip_methods: Iterable[str] = frozenset(),
+        skip_methods: Iterable[str] | None = None,
     ):
         object.__setattr__(self, "always_validated", always_validated)
-        object.__setattr__(self, "typecheck_init_result", typecheck_init_result)
+        object.__setattr__(
+            self, "typecheck_init_result", typecheck_init_result
+        )
+        if skip_methods is None:
+            skip_methods = frozenset()
         object.__setattr__(self, "skip_methods", frozenset(skip_methods))
 
 
@@ -176,18 +187,18 @@ policy_for_type: weakref.WeakKeyDictionary[type, TypedPolicy] = (
 )
 
 
-def mark_as_typed[T: Callable](fn: T) -> T:
+def mark_as_typed[T: CallableAny](fn: T) -> T:
     if getattr(fn, "__typinox_typed__", False):
         return fn
     setattr(fn, "__typinox_typed__", True)
     return fn
 
 
-def marked_as_typed(fn: Callable) -> bool:
+def marked_as_typed(fn: CallableAny) -> bool:
     return getattr(fn, "__typinox_typed__", False)
 
 
-def decorate_function(fn: Callable) -> Callable:
+def decorate_function(fn: CallableAny) -> CallableAny:
     return jaxtyped(fn, typechecker=beartype.beartype)
 
 
@@ -230,7 +241,8 @@ def sanitize_annotation(annotation: Any, cls: type) -> Any:
         if origin is Self:
             return cast(type[AbstractVmapped], annotation).replace_inner(cls)
     if isinstance(annotation, AnnotatedAlias):
-        origin = getattr(annotation, "__origin__")
+        # The typecheckers are too stupid to figure out what an AnnotatedAlias is
+        origin = annotation.__origin__  # type: ignore[attr-defined,reportAttributeAccessIssue]
         if origin is Self:
             return cls
         return Annotated[
@@ -263,7 +275,9 @@ def method_transform_annotations(
     for key, value in annotations.items():
         if isinstance(value, str):
             warnings.warn(
-                f"Typinox: string annotations are not supported: `{value}` in {fn} of {cls}"
+                "Typinox: string annotations are not "
+                f"supported: `{value}` in {fn} of {cls}",
+                stacklevel=2,
             )
             continue
         new_annotation = sanitize_annotation(value, cls)
@@ -278,7 +292,12 @@ def is_magic(name: str) -> bool:
     return name.startswith("__") and name.endswith("__")
 
 
-CallableDescriptor = staticmethod | classmethod | property | EqxWrapMethod
+CallableDescriptor = (
+    staticmethod[Any, Any]
+    | classmethod[Any, Any, Any]
+    | property
+    | EqxWrapMethod[Any]
+)
 
 SKIP_MAGIC_MODULES = frozenset(
     [
@@ -302,7 +321,8 @@ SKIP_MAGIC_NAMES = frozenset(
 
 
 def skip_magic(
-    name: str, fn: Callable | CallableDescriptor, cls: type, policy: TypedPolicy
+    name: str,
+    fn: CallableAny | CallableDescriptor,
 ) -> bool:
     if name in SKIP_MAGIC_NAMES:
         return True
@@ -311,7 +331,7 @@ def skip_magic(
     return False
 
 
-def decorate_method[T: Callable | CallableDescriptor](
+def decorate_method[T: CallableAny | CallableDescriptor](
     name: str, fn: T, cls: type, policy: TypedPolicy
 ) -> T:
     """Decorate a method with the typechecker (jaxtyped and beartype).
@@ -353,21 +373,22 @@ def decorate_method[T: Callable | CallableDescriptor](
     #         T, EqxWrapMethod(decorate_method(name, fn.method, cls, policy))
     #     )
     if not callable(fn):
-        return fn
+        return fn  # pyright: ignore[reportUnreachable]
     if not inspect.isfunction(fn):
         # We can only wrap Python-native functions.
         debug_warn(
-            f"Typinox: attempting to perform typechecking decoration on unknown object: {fn}",
+            "Typinox: attempting to perform typechecking decoration on "
+            f"unknown object: {fn}",
             TypinoxUnknownFunctionWarning,
         )
         return cast(T, fn)
     if marked_as_typed(fn):
         return cast(T, fn)
     if is_magic(name):
-        if skip_magic(name, fn, cls, policy):
+        if skip_magic(name, fn):
             return cast(T, fn)
     # Main case: pure-python function.
-    pyfunc = cast(FunctionType, fn)
+    pyfunc = cast(FunctionType, fn)  # pyright: ignore[reportUnnecessaryCast] to make mypy happy
     pyfunc = method_transform_annotations(pyfunc, cls, policy)
     decorated = decorate_function(pyfunc)
     decorated = mark_as_typed(decorated)
@@ -385,17 +406,19 @@ class RealTypedModuleMeta(EqxModuleMeta):
     """
 
     def __new__(
-        mcs,
-        name,
-        bases,
-        dict_,
+        mcs: Any,
+        name: str,
+        bases: tuple[type, ...],
+        dict_: dict[str, Any],
         /,
         strict: bool | None = False,
-        typed_policy: TypedPolicy | dict | None = None,
-        **kwargs,
+        typed_policy: TypedPolicy | dict[str, Any] | None = None,
+        **kwargs: Any,
     ):
         # [Step 1] Create the Module as normal.
-        cls = super().__new__(mcs, name, bases, dict_, strict=strict, **kwargs)
+        cls = super().__new__(
+            mcs, name, bases, dict_, strict=strict, **kwargs
+        )
         # Assumption:
         # - Every non-magic normal method is wrapped by Equinox.
         # - A __init__ method is created, either by the user or by Equinox.
@@ -433,7 +456,7 @@ class RealTypedModuleMeta(EqxModuleMeta):
                 sanitized_annotations.pop(field.name, None)
 
         # [Step 3.1 cont'd] Actually validate the fields.
-        def __validate_self_str__(self):
+        def __validate_self_str__(self: Any) -> str:
             __tracebackhide__ = True
             for member, hint in sanitized_annotations.items():
                 if member not in self.__dict__:
@@ -454,20 +477,23 @@ class RealTypedModuleMeta(EqxModuleMeta):
                     return "it failed its custom validation"
             return ""
 
-        def __validate_str__(self):
+        def __validate_str__(self: Any) -> str:
             __tracebackhide__ = True
             with jaxtyped("context"):  # type: ignore
                 return __validate_self_str__(self)
 
         # Add the methods to the class.
         __validate_str__.__qualname__ = "__validate_str__"
-        ABCMeta.__setattr__(cls, "__validate_self_str__", __validate_self_str__)
+        ABCMeta.__setattr__(
+            cls, "__validate_self_str__", __validate_self_str__
+        )
         ABCMeta.__setattr__(cls, "__validate_str__", __validate_str__)
         ABCMeta.__setattr__(cls, "__validate__", None)
         return cls
 
     # Creating an instance with MyModule(...) will call this method.
-    def __call__(cls, *args, **kwargs):
+    @override
+    def __call__(cls, *args: Any, **kwargs: Any) -> Any:
         __tracebackhide__ = True
         # [Step 1] Create the instance as normal.
         instance = super().__call__(*args, **kwargs)
@@ -477,7 +503,8 @@ class RealTypedModuleMeta(EqxModuleMeta):
             check_result = validate_str(instance)
             if check_result:
                 raise TypinoxTypeViolation(
-                    f"The instance {instance} of {cls} has failed typechecking, as {check_result}"
+                    "The instance "
+                    f"{instance} of {cls} has failed typechecking, as {check_result}"
                 )
         return instance
 

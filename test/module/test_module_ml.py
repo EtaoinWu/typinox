@@ -1,3 +1,5 @@
+# pyright: basic
+
 import jax
 from beartype.typing import Callable
 from jax import (

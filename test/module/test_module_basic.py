@@ -1,3 +1,5 @@
+# pyright: basic
+
 from typing import Self
 
 import chex
@@ -29,7 +31,7 @@ class Point2D(TypedModule):
 
     norm_correct_1_1 = norm_correct_1
 
-    def norm_correct_2(self) -> Float[Array, "..."]:
+    def norm_correct_2(self) -> Float[Array, " ..."]:
         return (self.x**2 + self.y**2) ** 0.5
 
     def norm_correct_3(self):
@@ -178,12 +180,17 @@ def test_doc_example():
             self._validate()  # populates jaxtyping shape storage
             return jnp.dot(self.k, x) + self.b
 
-        def compose(self, other: Self) -> Self:  # Self annotation is supported!
+        def compose(
+            self, other: Self
+        ) -> Self:  # Self annotation is supported!
             return self.__class__(
-                k=jnp.dot(self.k, other.k), b=self.b + jnp.dot(self.k, other.b)
+                k=jnp.dot(self.k, other.k),
+                b=self.b + jnp.dot(self.k, other.b),
             )
 
-    f1 = AffineMap(k=jnp.arange(6).reshape((3, 2)).astype(float), b=jnp.ones(3))
+    f1 = AffineMap(
+        k=jnp.arange(6).reshape((3, 2)).astype(float), b=jnp.ones(3)
+    )
     f2 = AffineMap(k=jnp.ones((5, 3)) / 18, b=jnp.ones(5))
 
     chex.assert_trees_all_close(f1(jnp.ones(2)), jnp.array([2.0, 6.0, 10.0]))

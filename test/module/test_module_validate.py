@@ -1,3 +1,5 @@
+# pyright: basic
+
 import jax
 import pytest
 from beartype.door import is_bearable
@@ -116,7 +118,9 @@ def test_fields():
         )
 
     bad_f = meaningless_array((2, 4))
-    with pytest.raises(TypeError, match="does not match the named dimensions"):
+    with pytest.raises(
+        TypeError, match="does not match the named dimensions"
+    ):
         _ = MatMulChain(
             a=2,
             d=3,
@@ -125,7 +129,9 @@ def test_fields():
             final=bad_f,
         )
 
-    with pytest.raises(TypeError, match="does not match the named dimensions"):
+    with pytest.raises(
+        TypeError, match="does not match the named dimensions"
+    ):
         _ = MatMulChain(
             a=2,
             d=4,
