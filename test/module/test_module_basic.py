@@ -78,8 +78,8 @@ def test_point2d():
 
 class TerriblePoint2D(TypedModule):
     # Why, oh why
-    x: Float[Scalar, ""] = tpx.field(typecheck=False)
-    y: Float[Scalar, ""] = tpx.field(typecheck=False)
+    x: Float[Scalar, ""] = tpx.field(typecheck=False)  # pyright: ignore[reportAssignmentType]
+    y: Float[Scalar, ""] = tpx.field(typecheck=False)  # pyright: ignore[reportAssignmentType]
 
     def norm_whatever(self):
         return (self.x**2 + self.y**2) ** 0.5

@@ -92,7 +92,7 @@ def test_vmapped_self():
 
 
 class MultiWaves(TypedModule):
-    n: int = tpx.field(static=True)
+    n: int = tpx.field(static=True)  # pyright: ignore[reportAssignmentType]
     waves: tuple[SinWaveT, ...]
     shifts: tuple[Float[Scalar, ""], ...]
 
@@ -140,7 +140,7 @@ def test_multi_waves():
 
 
 class SegmentTree(TypedModule):
-    n: int = tpx.field(static=True)
+    n: int = tpx.field(static=True)  # pyright: ignore[reportAssignmentType]
     left: Self | None
     right: Self | None
     value: Float[Scalar, ""]

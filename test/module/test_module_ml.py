@@ -35,7 +35,7 @@ LinearLayerT = ValidatedT[LinearLayer]
 class ActivationLayer(TypedModule):
     fn: Callable[[Float[Array, " in"]], Float[Array, " out=in"]] = tpx.field(
         static=True
-    )
+    )  # pyright: ignore[reportAssignmentType]
 
     def __call__(self, x: Float[Array, " in"]) -> Float[Array, " out=in"]:
         return self.fn(x)
@@ -98,7 +98,7 @@ def test_end2end_train():
 
 
 class MixtureOfExperts(TypedModule):
-    n_experts: int = tpx.field(static=True)
+    n_experts: int = tpx.field(static=True)  # pyright: ignore[reportAssignmentType]
     experts: Vmapped[Sequential, " n_experts"]
     gate: Sequential
 

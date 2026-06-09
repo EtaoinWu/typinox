@@ -54,8 +54,8 @@ def test_init_consistent():
 
 
 class MatMulChain(TypedModule):
-    a: int = tpx.field(static=True)
-    d: int = tpx.field(static=True)
+    a: int = tpx.field(static=True)  # pyright: ignore[reportAssignmentType]
+    d: int = tpx.field(static=True)  # pyright: ignore[reportAssignmentType]
     left: MatMulT
     right: MatMulT
     final: Float[Array, "a d"]
@@ -149,7 +149,7 @@ def test_doc_example():
 
     class SquareMat(TypedModule):
         mat: Float[Array, "n n"]
-        n: int = tpx.field(static=True)
+        n: int = tpx.field(static=True)  # pyright: ignore[reportAssignmentType]
 
         def __validate__(self):
             if self.n != self.mat.shape[0]:
