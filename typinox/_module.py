@@ -52,6 +52,9 @@ CallableAliasType = type(Callable[[int], float])
 GenericAliasType = type(tuple[int, str])
 UnpackType = type(Unpack[tuple[int, str]])
 UnionType = type(int | float)
+
+# The following type is only used for Python < 3.14
+# and will be removed in the future
 # pyrefly: ignore [invalid-annotation]
 UnionGenericAlias = type(Self | None)
 
