@@ -246,6 +246,9 @@ fabric.properties
 # VS Code
 .vscode/
 
+# Zed
+.zed/
+
 # General
 .DS_Store
 .AppleDouble

@@ -34,3 +34,9 @@ repos:
         language: system
         types: [python]
         files: '^(typinox)/'
+      - id: pyrefly
+        name: Pyrefly type checker
+        entry: uv run pyrefly check
+        language: system
+        types: [python]
+        files: '^(typinox)/'

@@ -44,3 +44,6 @@ jobs:
 
     - name: Run MyPy
       run: uv run mypy .
+
+    - name: Run MyPy
+      run: uv run pyrefly .

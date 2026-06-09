@@ -52,14 +52,14 @@ CallableAliasType = type(Callable[[int], float])
 GenericAliasType = type(tuple[int, str])
 UnpackType = type(Unpack[tuple[int, str]])
 UnionType = type(int | float)
+# pyrefly: ignore [invalid-annotation]
 UnionGenericAlias = type(Self | None)
 
 type CallableAny = Callable[..., Any]
 
 
 @overload
-def field():
-    dataclasses.Field[Any]
+def field() -> dataclasses.Field[Any]: ...
 
 
 @overload
@@ -74,8 +74,7 @@ def field(
     hash: bool | None = None,
     metadata: dict[str, Any] | None = None,
     kw_only: bool = False,
-):
-    dataclasses.Field[Any]
+) -> dataclasses.Field[Any]: ...
 
 
 def field(

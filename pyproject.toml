@@ -53,6 +53,7 @@ dev = [
     "mypy>=2.1.0",
     "sphinx-book-theme>=1.2.0,<2",
     "basedpyright>=1.39.6",
+    "pyrefly>=1.0.0",
 ]
 
 [tool.ruff]
@@ -131,3 +132,13 @@ reportUnknownParameterType = false
 [tool.mypy]
 python_version = "3.14"
 exclude = ["venv", "docs", ".venv", "test"]
+
+[tool.pyrefly]
+project-excludes = [
+    "**/venv*",
+    "**/docs*",
+    "**/.venv*",
+    "**/test*",
+]
+python-version = "3.14.0"
+preset = "strict"
