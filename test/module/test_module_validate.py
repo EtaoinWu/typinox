@@ -1,6 +1,7 @@
 # pyright: basic
 
 import jax
+import numpy as np
 import pytest
 from beartype.door import is_bearable
 from jax import (
@@ -76,8 +77,8 @@ class MatMulChain(TypedModule):
         )
 
 
-def meaningless_array(shape):
-    size = int(jnp.prod(jnp.array(shape)))
+def meaningless_array(shape: tuple[int, ...]):
+    size = int(np.prod(np.array(shape)))
     return jnp.arange(size).reshape(shape) / size - 0.2
 
 

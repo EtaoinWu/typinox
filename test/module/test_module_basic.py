@@ -1,6 +1,6 @@
 # pyright: basic
 
-from typing import Self
+from typing import Self, override
 
 import chex
 import numpy as np
@@ -105,9 +105,11 @@ def test_field_untypecheck():
 class Point3D(Point2D):
     z: Float[Scalar, ""]
 
+    @override
     def norm_correct_1(self) -> Float[Scalar, ""]:
         return (self.x**2 + self.y**2 + self.z**2) ** 0.5
 
+    @override
     def norm_incorrect_1(self) -> float:
         return (self.x**2 + self.y**2) ** 0.5  # type: ignore
 

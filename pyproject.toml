@@ -138,7 +138,6 @@ project-excludes = [
     "**/venv*",
     "**/docs*",
     "**/.venv*",
-    "**/test*",
 ]
 python-version = "3.14.0"
 preset = "strict"

@@ -5,16 +5,18 @@ from typing import Any
 import chex
 import jax
 from beartype.door import is_bearable
+from beartype.typing import TypeIs
 from jax import numpy as jnp
-from jaxtyping import Array, Shaped
+from jaxtyping import Array, Integer, ScalarLike, Shaped
+from typing_extensions import TypeForm
 
 import typinox as tpx
 from typinox import Vmapped
 
 
-def my_is_bearable(x: Any, T) -> bool:  # noqa: F821
+def my_is_bearable[T](x: Any, hint: TypeForm[T] | Any) -> TypeIs[T]:
     """To make pyright happy."""
-    return is_bearable(x, T)
+    return is_bearable(x, hint)  # pyright: ignore[reportArgumentType]
 
 
 def test_unstack_simple():
@@ -51,7 +53,7 @@ def test_stack_simple():
 
 
 def test_stack_unstack():
-    def f(x):
+    def f(x: Integer[ScalarLike, ""]):
         return {
             "a": x,
             "b": [

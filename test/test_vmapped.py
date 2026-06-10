@@ -1,4 +1,6 @@
 # pyright: basic
+#
+from typing import TypeIs
 
 import chex
 import equinox as eqx
@@ -7,21 +9,23 @@ import numpy as np
 import pytest
 from beartype import beartype as typechecker
 from beartype.door import is_bearable
+from beartype.typing import Any
 from jax import (
     numpy as jnp,
 )
 from jaxtyping import Array, Float, Integer, Scalar, Shaped, jaxtyped
 from numpy import ndarray
+from typing_extensions import TypeForm
 
 from typinox.vmapped import VmappedI, VmappedT
 
 
-def t(a, b):
-    return is_bearable(a, b)
+def t[T](a: Any, b: TypeForm[T] | Any) -> TypeIs[T]:
+    return is_bearable(a, b)  # pyright: ignore[reportArgumentType]
 
 
 @pytest.mark.parametrize("Vmapped", [VmappedI, VmappedT])
-def test_vmapped_basic(Vmapped):
+def test_vmapped_basic(Vmapped: Any):
     """Test the basic shape handling of Vmapped."""
     arr3 = jnp.array([1, 2, 3])
     arr34 = jnp.arange(12).reshape(3, 4)
@@ -91,7 +95,7 @@ def test_vmapped_basic(Vmapped):
 
 
 @pytest.mark.parametrize("Vmapped", [VmappedI, VmappedT])
-def test_vmapped_large(Vmapped):
+def test_vmapped_large(Vmapped: Any):
     """Test the basic shape handling of Vmapped with more dimensions."""
     arr3345 = jnp.arange(180).reshape(3, 3, 4, 5)
     arr4335 = jnp.einsum("abcd->cbad", arr3345)
@@ -134,7 +138,7 @@ def test_vmapped_large(Vmapped):
 
 
 @pytest.mark.parametrize("Vmapped", [VmappedT])
-def test_vmapped_vmap_simple(Vmapped):
+def test_vmapped_vmap_simple(Vmapped: Any):
     """Test Vmapped with vmap using a basic function."""
 
     @eqx.filter_jit
@@ -166,7 +170,7 @@ def test_vmapped_vmap_simple(Vmapped):
 
 
 @pytest.mark.parametrize("Vmapped", [VmappedI, VmappedT])
-def test_vmapped_vmap_axes(Vmapped):
+def test_vmapped_vmap_axes(Vmapped: Any):
     """Test Vmapped with vmap using a function with in_axes and out_axes."""
 
     @jax.jit

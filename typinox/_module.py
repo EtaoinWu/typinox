@@ -62,22 +62,32 @@ type CallableAny = Callable[..., Any]
 
 
 @overload
-def field() -> dataclasses.Field[Any]: ...
-
-
-@overload
 def field(
     *,
     typecheck: bool = True,
     converter: Callable[[Any], Any] | Any = ...,
     static: bool = False,
-    default: Any = ...,
     default_factory: Callable[[], Any] | Any = ...,
     init: bool = True,
     hash: bool | None = None,
     metadata: dict[str, Any] | None = None,
     kw_only: bool = False,
-) -> dataclasses.Field[Any]: ...
+) -> Any: ...
+
+
+@overload
+def field[T](
+    *,
+    default: T,
+    typecheck: bool = True,
+    converter: Callable[[Any], Any] | Any = ...,
+    static: bool = False,
+    default_factory: Callable[[], Any] | Any = ...,
+    init: bool = True,
+    hash: bool | None = None,
+    metadata: dict[str, Any] | None = None,
+    kw_only: bool = False,
+) -> T: ...
 
 
 def field(
@@ -85,7 +95,7 @@ def field(
     typecheck: bool = True,
     metadata: dict[str, Any] | None = None,
     **kwargs: Any,
-) -> dataclasses.Field[Any]:
+) -> Any:
     """Specify a field of a typinox typed module.
 
     Parameters

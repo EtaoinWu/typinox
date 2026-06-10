@@ -21,7 +21,7 @@ def test_diamond_inheritance():
     happys = [Mock(return_value=True) for _ in range(4)]
 
     def happy_func(i: int) -> Callable[[Any], bool]:
-        def z(x):
+        def z(x: int):
             happys[i](x)
             return True
 
@@ -29,7 +29,7 @@ def test_diamond_inheritance():
 
     result_mock = Mock(return_value=True)
 
-    def good_result(x):
+    def good_result(x: int):
         return result_mock(x)
 
     class A(TypedModule):

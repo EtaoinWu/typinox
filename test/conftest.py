@@ -1,5 +1,7 @@
 # pyright: basic
 
+from typing import Any
+
 import chex
 import equinox
 import jax
@@ -13,7 +15,7 @@ import typinox
 
 
 @pytest.fixture(autouse=True)
-def add_doctest_np(doctest_namespace):
+def add_doctest_np(doctest_namespace: dict[str, Any]):
     doctest_namespace["jax"] = jax
     doctest_namespace["jnp"] = jnp
     doctest_namespace["jt"] = jt

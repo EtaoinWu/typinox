@@ -7,7 +7,7 @@ from jax import (
     random as jr,
     tree as jt,
 )
-from jaxtyping import Array, Float, Scalar
+from jaxtyping import Array, Float, Key, Scalar, ScalarLike
 
 import typinox as tpx
 from typinox import (
@@ -56,7 +56,9 @@ class Sequential(TypedModule):
 batch_size = 1000
 
 
-def loss(net, dk) -> Scalar:
+def loss(
+    net: Callable[..., Float[Array, " ..."]], dk: Key[Scalar, ""]
+) -> Scalar:
     xy = jr.uniform(dk, (batch_size, 2), minval=-1, maxval=1)
     res = jax.vmap(net)(xy).reshape(-1)
     truth = (xy[:, 1] * xy[:, 0] < 0).astype(jnp.float32)
@@ -64,8 +66,12 @@ def loss(net, dk) -> Scalar:
 
 
 @jax.jit
-def train_step(net, dk, lr):
-    def iter(net, sk):
+def train_step(
+    net: Callable[..., Float[Array, " ..."]],
+    dk: Key[Scalar, ""],
+    lr: Float[ScalarLike, ""],
+):
+    def iter(net: Callable[..., Float[Array, " ..."]], sk: Key[Scalar, ""]):
         l, grad = jax.value_and_grad(loss)(net, sk)
         new_net = jt.map(lambda n, g: n - lr * g, net, grad)
         return new_net, l
@@ -117,7 +123,7 @@ MixtureOfExpertsT = ValidatedT[MixtureOfExperts]
 
 
 def test_end2end_train_moe():
-    def gen_expert(k):
+    def gen_expert(k: Key[Scalar, ""]):
         k1, k2, k3, k4 = jr.split(k, 4)
         return Sequential(
             [
@@ -127,7 +133,7 @@ def test_end2end_train_moe():
             ]
         )
 
-    def gen_gate(k, m):
+    def gen_gate(k: Key[Scalar, ""], m: int):
         k1, k2, k3, k4 = jr.split(k, 4)
         return Sequential(
             [
@@ -138,7 +144,7 @@ def test_end2end_train_moe():
             ]
         )
 
-    def gen_moe(k, m) -> MixtureOfExpertsT:
+    def gen_moe(k: Key[Scalar, ""], m: int) -> MixtureOfExpertsT:
         k1, k2 = jr.split(k, 2)
         return MixtureOfExperts(
             m, jax.vmap(gen_expert)(jr.split(k1, m)), gen_gate(k2, m)

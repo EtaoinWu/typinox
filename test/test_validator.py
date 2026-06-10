@@ -8,13 +8,15 @@ import beartype.roar
 import pytest
 from beartype import beartype as typechecker
 from beartype.door import is_bearable
+from beartype.typing import TypeIs
+from typing_extensions import TypeForm
 
 from typinox import ValidatedT, ValidationFailed
 
 
-def my_is_bearable(x: Any, T) -> bool:
+def my_is_bearable[T](x: Any, hint: TypeForm[T] | Any) -> TypeIs[T]:
     """To make pyright happy."""
-    return is_bearable(x, T)
+    return is_bearable(x, hint)  # pyright: ignore[reportArgumentType]
 
 
 class ClassA:
@@ -85,7 +87,10 @@ fn_b = (fn_b_vanilla, fn_b_custom, fn_b_typechecked, fn_b_custom_typechecked)
 
 
 @pytest.mark.parametrize("cls,fn", [(ClassA, fn_a), (ClassB, fn_b)])
-def test_good_case(cls, fn):
+def test_good_case(
+    cls: type[ClassA | ClassB],
+    fn: Any,
+):
     fn_vanilla, fn_custom, fn_typechecked, fn_custom_typechecked = fn
     assert fn_vanilla(cls(1, 2)) == 3
     assert fn_custom(cls(1, 2)) == 3
@@ -100,7 +105,11 @@ def test_good_case(cls, fn):
         (ClassB, fn_b, "this instance has no x attribute"),
     ],
 )
-def test_bad_attribute_read(cls, fn, errorstr):
+def test_bad_attribute_read(
+    cls: type[ClassA | ClassB],
+    fn: Any,
+    errorstr: str,
+):
     fn_vanilla, fn_custom, fn_typechecked, fn_custom_typechecked = fn
     with pytest.raises(AttributeError):
         fn_vanilla(cls(0, 2))
@@ -113,6 +122,7 @@ def test_bad_attribute_read(cls, fn, errorstr):
 
     with pytest.raises(
         beartype.roar.BeartypeCallHintParamViolation,
+        # TODO: this feature is not yet supported
         # match=errorstr,
     ):
         fn_custom_typechecked(cls(0, 2))
@@ -125,7 +135,11 @@ def test_bad_attribute_read(cls, fn, errorstr):
         (ClassB, fn_b, "this instance has no x attribute"),
     ],
 )
-def test_bad_attribute_read_pretty(cls, fn, errorstr):
+def test_bad_attribute_read_pretty(
+    cls: type[ClassA | ClassB],
+    fn: Any,
+    errorstr: str,
+):
     fn_vanilla, fn_custom, fn_typechecked, fn_custom_typechecked = fn
     with pytest.raises(AttributeError):
         fn_vanilla(cls(0, 0))
@@ -138,13 +152,14 @@ def test_bad_attribute_read_pretty(cls, fn, errorstr):
 
     with pytest.raises(
         beartype.roar.BeartypeCallHintParamViolation,
+        # TODO: this feature is not yet supported
         # match=errorstr,
     ):
         fn_custom_typechecked(cls(0, 0))
 
 
 @pytest.mark.parametrize("cls,fn", [(ClassA, fn_a), (ClassB, fn_b)])
-def test_bad_type(cls, fn):
+def test_bad_type(cls: type[ClassA | ClassB], fn: Any):
     fn_vanilla, fn_custom, fn_typechecked, fn_custom_typechecked = fn
     assert fn_vanilla(ClassC(1, 2)) == 3  # type: ignore
     assert fn_custom(ClassC(1, 2)) == 3  # type: ignore

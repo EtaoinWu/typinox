@@ -5,11 +5,13 @@ from typing import Any, Self
 import jax
 import pytest
 from beartype.door import is_bearable
+from beartype.typing import Sequence, TypeIs
 from jax import (
     numpy as jnp,
     tree as jt,
 )
-from jaxtyping import Float, Scalar, jaxtyped
+from jaxtyping import Array, Float, Real, Scalar, ScalarLike, jaxtyped
+from typing_extensions import TypeForm
 
 import typinox as tpx
 from typinox import (
@@ -23,9 +25,9 @@ from typinox.tree import unstack
 set_debug_mode(True)
 
 
-def my_is_bearable(x: Any, T) -> bool:
+def my_is_bearable[T](x: Any, hint: TypeForm[T] | Any) -> TypeIs[T]:
     """To make pyright happy."""
-    return is_bearable(x, T)
+    return is_bearable(x, hint)  # pyright: ignore[reportArgumentType]
 
 
 class SinWave(TypedModule):
@@ -40,7 +42,7 @@ class SinWave(TypedModule):
         return self
 
     def actual_rotate_90_degs(self):
-        def rotate(x):
+        def rotate(x: Real[Scalar, ""]):
             return self.__class__(
                 freq=self.freq,
                 phase=self.phase + jnp.pi / 4 * x,
@@ -70,7 +72,7 @@ def test_simple_vmap():
 
     nums = jnp.array([1.0, 2.0, 3.0])
 
-    def call(wave, num):
+    def call(wave: SinWaveT, num: Real[Scalar, ""]):
         return wave(num)
 
     _ = jax.vmap(call)(waves, nums)
@@ -109,7 +111,7 @@ MultiWavesT = ValidatedT[MultiWaves]
 
 
 def test_multi_waves():
-    def create_multiwave(k):
+    def create_multiwave(k: Real[ScalarLike, ""]):
         n = 4
         freqs = jnp.array([1.0, 2.0, 3.0, 4.0]) + k
         phases = jnp.array([0.0, 1.0, 2.0, 3.0]) / jnp.pi
@@ -157,11 +159,13 @@ class SegmentTree(TypedModule):
         )
 
     @classmethod
-    def create_leaf(cls, value) -> Self:
+    def create_leaf(cls, value: Float[Scalar, ""]) -> Self:
         return cls(1, None, None, value, value)
 
     @classmethod
-    def create_node(cls, left, value, right):
+    def create_node(
+        cls, left: Self | None, value: Float[Scalar, ""], right: Self | None
+    ) -> Self:
         return cls(
             (left.n if left else 0) + 1 + (right.n if right else 0),
             left,
@@ -173,7 +177,9 @@ class SegmentTree(TypedModule):
         )
 
     @classmethod
-    def build(cls, values) -> Self | None:
+    def build(
+        cls, values: Sequence[Float[Scalar, ""]] | Float[Array, " n"]
+    ) -> Self | None:
         n = len(values)
         if n == 0:
             return None
@@ -184,7 +190,7 @@ class SegmentTree(TypedModule):
         right = cls.build(values[mid + 1 :])
         return cls.create_node(left, values[mid], right)
 
-    def query(self, i, j):
+    def query(self, i: int, j: int) -> Float[Scalar, ""]:
         if i < 0:
             i = 0
         if j >= self.n:
@@ -224,11 +230,13 @@ def test_segment_tree():
         arr_value = jnp.sum(arr * cons_arr)
         assert jnp.allclose(st_value, arr_value)
 
-    def create_st(k, z):
+    def create_st(
+        k: Float[Scalar, ""], z: Float[Scalar, ""]
+    ) -> SegmentTree | None:
         arr = jnp.sin(jnp.arange(20) * k + z)
         return SegmentTree.build(arr)
 
-    def elim_st(st):
+    def elim_st(st: SegmentTree) -> tuple[Float[Scalar, ""], ...]:
         return tuple(
             [st.query(i, j) for i, j in [(3, 7), (6, 16), (0, 15), (-3, 37)]]
         )
@@ -243,11 +251,29 @@ def test_segment_tree():
     with jaxtyped("context"):  # type: ignore
         assert my_is_bearable(sts, Vmapped[SegmentTreeT, " c"])
         assert my_is_bearable(
-            sums, Vmapped[tuple[(Float[Scalar, ""],) * 4], " c"]
+            sums,
+            Vmapped[
+                tuple[
+                    Float[Scalar, ""],
+                    Float[Scalar, ""],
+                    Float[Scalar, ""],
+                    Float[Scalar, ""],
+                ],
+                " c",
+            ],
         )
 
     with jaxtyped("context"):  # type: ignore
         assert my_is_bearable(sts, Vmapped[SegmentTreeT, " c"])
         assert not my_is_bearable(
-            sums, Vmapped[tuple[(Float[Scalar, ""],) * 4], " c+1"]
+            sums,
+            Vmapped[
+                tuple[
+                    Float[Scalar, ""],
+                    Float[Scalar, ""],
+                    Float[Scalar, ""],
+                    Float[Scalar, ""],
+                ],
+                " c+1",
+            ],
         )
