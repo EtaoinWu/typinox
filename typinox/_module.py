@@ -60,14 +60,19 @@ UnionGenericAlias = type(Self | None)
 
 type CallableAny = Callable[..., Any]
 
+# field() typing variants:
+#   0. None of below (Any)
+#   1. (default: T) only -> T
+#   2. (default: T, converter: T->U) -> U
+#   3. (default_factory: () -> T) -> T
+#   4. (default_factory: () -> T, converter: T->U) -> U
+
 
 @overload
 def field(
     *,
     typecheck: bool = True,
-    converter: Callable[[Any], Any] | Any = ...,
     static: bool = False,
-    default_factory: Callable[[], Any] | Any = ...,
     init: bool = True,
     hash: bool | None = None,
     metadata: dict[str, Any] | None = None,
@@ -80,9 +85,48 @@ def field[T](
     *,
     default: T,
     typecheck: bool = True,
-    converter: Callable[[Any], Any] | Any = ...,
     static: bool = False,
-    default_factory: Callable[[], Any] | Any = ...,
+    init: bool = True,
+    hash: bool | None = None,
+    metadata: dict[str, Any] | None = None,
+    kw_only: bool = False,
+) -> T: ...
+
+
+@overload
+def field[T](
+    *,
+    default_factory: Callable[[], T],
+    typecheck: bool = True,
+    static: bool = False,
+    init: bool = True,
+    hash: bool | None = None,
+    metadata: dict[str, Any] | None = None,
+    kw_only: bool = False,
+) -> T: ...
+
+
+@overload
+def field[S, T](
+    *,
+    default: S,
+    converter: Callable[[S], T],
+    typecheck: bool = True,
+    static: bool = False,
+    init: bool = True,
+    hash: bool | None = None,
+    metadata: dict[str, Any] | None = None,
+    kw_only: bool = False,
+) -> T: ...
+
+
+@overload
+def field[S, T](
+    *,
+    default_factory: Callable[[], S],
+    converter: Callable[[S], T],
+    typecheck: bool = True,
+    static: bool = False,
     init: bool = True,
     hash: bool | None = None,
     metadata: dict[str, Any] | None = None,
